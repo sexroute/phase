@@ -1,9 +1,10 @@
-clear;clc;close all;
+function phase = computePhase(revfilename,wavefilename)
+
 
 %0.输入参数
 sampleFreq = 25600;%采样率 
-revfile = 'rev1.txt';
-wavefile = 'wave1.txt';
+revfile = revfilename;
+wavefile = wavefilename;
 
 
 %1.计算整周期
@@ -80,7 +81,7 @@ sinwave = AMP*sin(2*pi*TN*workfreq);
 sinfft=fft(sinwave,points);
 sinangle = angle(sinfft)*180/pi;
 [amp,sinindex] = max(sinfft);
-plot(sinangle(1:points/2));
+
 wavefft=fft(wavenew,points);
 anglewave = angle(wavefft)*180/pi;
 diffs = anglewave-sinangle;
@@ -88,6 +89,6 @@ diff = diffs(sinindex);
 if(diff<0) 
     diff = diff+360;
 end
-x=diff;
 
+phase = diff;
 
