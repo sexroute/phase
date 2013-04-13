@@ -1,19 +1,28 @@
 clear;clc;close all
 freq=5120; %sample frequence
 n=32;    %sample round
-f0=277.1;    %object work frequence
-phase0 = 60; %object phase in degree , /180*pi to get rad
+f0=71.121;    %object work frequence
+phase0 = 13.1244; %object phase in degree , /180*pi to get rad
 
 
 dt=1/freq;
 TS = n/f0;
 T=0:dt:TS;
 T=T(2:length(T));
-smp = length(T)/2;
+smp = (length(T)/2);
+
+win=hanning(smp)';%汉宁窗,后面的一瞥为转换为列向量
+win1=win/sum(win);%汉宁窗归一化
+winn=conv(win,win);%汉宁窗的卷积
+win2=winn/sum(winn);%汉宁窗卷积的归一化
 
 phase0_degree = phase0/180*pi;
-sig = sin(2*pi*f0*T+phase0_degree);
+sig = 2*sin(2*pi*f0*T+phase0_degree)+sin(4*pi*f0*T+phase0_degree);
 sig_compare = sin(2*pi*f0*T);
+
+r=randn(1,length(sig));
+a=sqrt(0.009*sum(sig.^2)./sum(sig.^2));
+sig = sig+a;
 
 subplot(3,1,1);
 plot(T,sig,'r');
@@ -21,15 +30,24 @@ hold on
 plot(T,sig_compare);
 hold off
 
-fftsig = fft(sig,smp);
-fftsig_compare = fft(sig_compare,smp);
 
-df=freq/smp;
+sig=sig.*win2;
+pts = fix(smp-1);
+ptsend = length(T)-pts;
+sig=[0,sig(1:pts)]+sig(pts:pts*2);%长度为N，送入FFT处理，出来为APFFT
+
+sig_compare = sig_compare.*win2;
+sig_compare=[0,sig_compare(1:pts)]+sig_compare(pts:pts*2);%长度为N，送入FFT处理，出来为APFFT
+
+fftsig = fft(sig,pts);
+fftsig_compare = fft(sig_compare,pts);
+
+df=freq/pts;
 freqs = 0:df:freq;
-amps = abs(fftsig)*2/smp;
-amps_compare = abs(fftsig_compare)*2/smp;
+amps = abs(fftsig)*2/pts;
+amps_compare = abs(fftsig_compare)*2/pts;
 
-freqNum = fix(smp/2);
+freqNum = fix(pts/2);
 freqs = freqs(1:freqNum);
 
 [famp,findex] = max(amps);
@@ -39,21 +57,21 @@ freq0_computed = freqs(findex);
 freq0_computed_compare = freqs(findex);
 
 subplot(3,1,2);
-plot(freqs,amps(1:length(freqs)),'r');
+stem(freqs,amps(1:length(freqs)),'r');
 hold on;
-plot(freqs,amps_compare(1:length(freqs)));
+stem(freqs,amps_compare(1:length(freqs)));
 hold off
 
-fpha = phase(fftsig)*180/pi;
+fpha = mod(phase(fftsig)*180/pi,360);
 phase_computed = fpha(findex);
 
-fpha_compare = phase(fftsig_compare)*180/pi;
+fpha_compare = mod(phase(fftsig_compare)*180/pi,360);
 phase_computed_compare = fpha_compare(findex);
 
 subplot(3,1,3);
-plot(freqs,mod(fpha(1:length(freqs)),360)*pi,'r');
+plot(freqs,fpha(1:length(freqs)),'r');
 hold on;
-plot(freqs,mod(fpha_compare(1:length(freqs)),360)*pi);
+plot(freqs,fpha_compare(1:length(freqs)));
 
 
 phase_diff = phase_computed - phase_computed_compare  
