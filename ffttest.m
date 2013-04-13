@@ -1,7 +1,7 @@
 clear;clc;close all
 freq=5120; %sample frequence
-n=5;    %sample round
-f0=77.179;    %object work frequence
+n=32;    %sample round
+f0=277.1;    %object work frequence
 phase0 = 60; %object phase in degree , /180*pi to get rad
 
 
@@ -9,11 +9,11 @@ dt=1/freq;
 TS = n/f0;
 T=0:dt:TS;
 T=T(2:length(T));
-smp = length(T);
+smp = length(T)/2;
 
 phase0_degree = phase0/180*pi;
 sig = sin(2*pi*f0*T+phase0_degree);
-sig_compare = 0.1*sin(2*pi*f0*T);
+sig_compare = sin(2*pi*f0*T);
 
 subplot(3,1,1);
 plot(T,sig,'r');
