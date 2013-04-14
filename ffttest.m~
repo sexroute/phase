@@ -81,15 +81,6 @@ phase_diff = phase_computed - phase_computed_compare
 
 phase_diff2 = givepd(sig_0,sig_0_compare)*180/pi
 
-fftsig = apfft(sig_0,pts);
-fftsig_compare = apfft(sig_0_compare,pts);
-[famp,findex] = max(amps);
-freq0_computed = freqs(findex);
-[famp_comare,findex] = max(amps_compare);
-freq0_computed_compare = freqs(findex);
-phase_computed = fpha(findex)-phase_1;
-phase_computed_compare = fpha_compare(findex)-phase_1;
-phase_diff3 = phase_computed - phase_computed_compare  
-
-
+fftsig = apfft(sig,pts);
+fftsig_compare = 
 
