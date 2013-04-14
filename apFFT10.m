@@ -2,7 +2,7 @@ clc;clear;close all
 N=128;
 n=-N+1:N-1;
 %fs=4e9;%采样频率，根据采样定理，大于2f
-s=2*cos(10.0*2*n*pi/N+pi/18)+2*cos(20.1*2*n*pi/N+pi/6)+2*cos(30.2*2*n*pi/N+pi*5/18)+2*cos(40.3*2*n*pi/N+7*pi/18)+2*cos(50.4*2*n*pi/N+pi/2);%丢掉的1e9会在后面补充回来
+s=3*cos(10.0*2*n*pi/N+pi/18)+2*cos(20.1*2*n*pi/N+pi/6)+2*cos(30.2*2*n*pi/N+pi*5/18)+2*cos(40.3*2*n*pi/N+7*pi/18)+2*cos(50.4*2*n*pi/N+pi/2);%丢掉的1e9会在后面补充回来
 %抽样信号定义块
 
 y1=s(N:2*N-1);%N长的数据送入FFT处理
@@ -62,7 +62,7 @@ title('apFFT幅频曲线');
 ylabel('幅值');
 xlabel('频率（HZ）');
 xlim([0,60]);
-ylim([0,1.2]);
+ylim([0,10]);
 figure(4);
 stem(t2,p_apfft,'.k');%APFFT的幅频曲线
 xlim([0,60]);
