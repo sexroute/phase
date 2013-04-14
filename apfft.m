@@ -1,8 +1,8 @@
-function [amps,phases] = apfft(apsignal,ansignals)
+function result = apfft(apsignal,ansignals)
 
 mods = mod(ansignals,2);
 if mods ~= 0
-    ansignals(length(ansignals)) = 0;
+    apsignal(length(ansignals)) = 0;
 end
 smp = ansignals/2;
 
@@ -18,7 +18,8 @@ pts = smp-1;
 data1 = sig(pts:pts*2);
 data0 = [0,sig(1:pts)];
 sig= data0+data1;%长度为N，送入FFT处理，出来为APFFT
-
+if pts < 0
+    pts
+end
 fftsig = fft(sig,pts);
-amps = abs(fftsig)*2/pts;
-phases = (angle(fftsig)*180/pi);
+result = fftsig;

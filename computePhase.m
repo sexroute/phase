@@ -1,8 +1,8 @@
-function phase = computePhase(revfilename,wavefilename)
+function phase = computePhase(revfilename,wavefilename,mode)
 
 
 %0.输入参数
-sampleFreq = 25600;%采样率 
+sampleFreq = 5120;%采样率 
 revfile = revfilename;
 wavefile = wavefilename;
 
@@ -34,7 +34,7 @@ while i<y
     end
 end
 points = z(length(z)) - z(1)+1;
-sampleTime = points/25600; %采样时间
+sampleTime = points/sampleFreq; %采样时间
 workfreq = (length(z)-1)/sampleTime; %工频
 rpm = workfreq*60; %转速
 
@@ -72,23 +72,48 @@ plot(revnew,'r-');
 %}
 
 %3.生成正弦波
+
 dt = 1/sampleFreq;
 TN = 0:dt:sampleTime;
 AMP = max(wavenew)*10;
 sinwave = AMP*sin(2*pi*TN*workfreq);
 
-%4 compute phase different
-sinfft=fft(sinwave,points);
-sinangle = angle(sinfft)*180/pi;
-[amp,sinindex] = max(sinfft);
+if(mode == 0)
+    df = sampleFreq/points;
+    freqs = 0:df:sampleFreq;
 
-wavefft=fft(wavenew,points);
-anglewave = angle(wavefft)*180/pi;
-diffs = anglewave-sinangle;
-diff = diffs(sinindex);
-if(diff<0) 
-    diff = diff+360;
+    %4 compute phase different
+
+    sinfft=fft(sinwave,points);
+    sinangle = angle(sinfft)*180/pi;
+    [amp,sinindex] = max(abs(sinfft));
+    freq0 =freqs(sinindex);
+
+    wavefft=fft(wavenew,points);
+    anglewave = angle(wavefft)*180/pi;
+    diffs = anglewave-sinangle;
+    diff = diffs(sinindex);
+    if(diff<0) 
+        diff = diff+360;
+    end
+    phase=diff;
+else
+    df = sampleFreq*2/points;
+    freqs = 0:df:sampleFreq;
+
+    %4 compute phase different
+
+    sinfft=apfft(sinwave,points);
+    sinangle = angle(sinfft)*180/pi;
+    [amp,sinindex] = max(abs(sinfft));
+    freq0 =freqs(sinindex);
+
+    wavefft=apfft(wavenew,points);
+    anglewave = angle(wavefft)*180/pi;
+    diffs = anglewave-sinangle;
+    diff = diffs(sinindex);
+    if(diff<0) 
+        diff = diff+360;
+    end
+    phase=diff;
 end
-
-phase = diff;
-
