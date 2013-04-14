@@ -4,7 +4,7 @@ lstrWaveFileNameConst = 'Wave%d.txt';
 diffs0 = zeros(1);
 diffs1 = zeros(1);
 index = 1;
-for i=1:33
+for i=3:33
     lstrRevFileName = sprintf(lstrRevFileNameConst,i);
     lstrWaveFileName = sprintf(lstrWaveFileNameConst,i);
     
