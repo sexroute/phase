@@ -110,8 +110,7 @@ else
 
     wavefft=apfft(wavenew,points);
     anglewave = angle(wavefft)*180/pi;
-    diffs = anglewave-sinangle;
-    diff = diffs(sinindex);
+    diff = anglewave(sinindex)-sinangle(sinindex);
     if(diff<0) 
         diff = diff+360;
     end

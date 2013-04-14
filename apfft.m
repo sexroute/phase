@@ -2,9 +2,15 @@ function result = apfft(apsignal,ansignals)
 
 mods = mod(ansignals,2);
 if mods ~= 0
-    apsignal(length(ansignals)) = 0;
+    n_sub = length(apsignal);
+    if mod(n_sub,2) ~=0        
+        n_sub = n_sub-1;
+        apsignal = apsignal(1:n_sub);
+    end
+    
+    ansignals = n_sub;
 end
-smp = ansignals/2;
+smp = fix(ansignals/2);
 
 sig = apsignal;
 

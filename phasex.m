@@ -2,8 +2,8 @@ clear;clc;close all;
 
 %0.输入参数
 sampleFreq = 25600;%采样率 
-revfile = 'rev3.txt';
-wavefile = 'wave3.txt';
+revfile = 'rev2.txt';
+wavefile = 'wave2.txt';
 
 
 %1.计算整周期
@@ -58,7 +58,7 @@ end
 wavenew = wave(wavestartIndex:waveendIndex);
 revnew = rev(wavestartIndex:waveendIndex);
 
-%{
+
 revnew = revnew/30-9.35;
 subplot(311);
 plot(wavenew);
@@ -68,7 +68,7 @@ subplot(313);
 plot(wavenew);
 hold on
 plot(revnew,'r-');
-%}
+
 
 %3.生成正弦波
 dt = 1/sampleFreq;
@@ -82,12 +82,12 @@ freqs = 0:df:sampleFreq;
 sinfft=apfft(sinwave,points);
 sinangle = angle(sinfft)*180/pi;
 [amp,sinindex] = max(abs(sinfft));
+sinindex=sinindex;
 freq0 =freqs(sinindex);
-plot(sinangle);
+%plot(sinangle);
 wavefft=apfft(wavenew,points);
 anglewave = angle(wavefft)*180/pi;
-diffs = anglewave-sinangle;
-diff = diffs(sinindex);
+diff = anglewave(sinindex)-sinangle(sinindex);
 if(diff<0) 
     diff = diff+360;
 end
