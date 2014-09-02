@@ -1,0 +1,80 @@
+close all;clc;clear all;
+N=256;%当信号s中包含多种频率信号时，N值需要足够大！
+t=-N+1:2*N-1;
+f0=50.4;A0=1;ph0=10;
+f1=40.2;A1=0.0;ph1=20;
+f2=12.3;A2=0.0;ph2=30;
+f3=200.4;A3=0.0;ph3=40;
+f4=250.5;A4=0.0;ph4=50;
+sn=(A0*cos(2*pi*t*f0/N+ph0*pi/180)+A1*cos(2*pi*t*f1/N+ph1*pi/180)+A2*cos(2*pi*t*f2/N+ph2*pi/180)+A3*cos(2*pi*t*f3/N+ph3*pi/180)+A4*cos(2*pi*t*f4/N+ph4*pi/180));
+s=awgn(sn,inf);%无噪情况
+%s=awgn(sn,31.5);%有噪情况
+win=hanning(N)';win1=hann(N)';
+win2=conv(win,win1);
+win2=win2/sum(win2);
+w=pi*2;
+s1=s(1:2*N-1);      %第1组（2N-1）个数据
+    y1=s1.*win2;
+    y1a=y1(N:end)+[0 y1(1:N-1)];
+    out1=fft(y1a,N);
+    a1=abs(out1);
+    p1=mod(phase(out1),2*pi);
+s2=s(1+N:3*N-1);    %第2组（2N-1）个数据
+    y2=s2.*win2;
+    y2a=y2(N:end)+[0 y2(1:N-1)];
+    out2=fft(y2a,N);
+    a2=abs(out2);
+    p2=mod(phase(out2),2*pi);
+    g=mod((p2-p1)/pi/2,1);
+h=2*pi*g.*(1-g.*g)./sin(pi*g);
+aa1=abs((h.^2).*a2)/2;
+disp('=====================结果1=====================')
+    rr=round(f0);
+        disp('主谱线位置:')
+        k0=round(f0)+1;
+        disp('频率校正值:')
+        fff=floor(f0)+g(rr+1)
+        disp('振幅校正值:')
+        aaa=aa1(floor(f0)+1)
+        disp('初相位校正值:')
+        ppp=p1(rr+1)*180/pi
+disp('----------2----------')        
+    rr=round(f1);
+        disp('主谱线位置:')
+        k0=round(f1)+1;
+        disp('频率校正值:')
+        fff=floor(f1)+g(rr+1)
+        disp('振幅校正值:')
+        aaa=aa1(floor(f1)+1)
+        disp('初相位校正值:')
+        ppp=p1(rr+1)*180/pi
+disp('----------3----------')        
+    rr=round(f2);
+        disp('主谱线位置:')
+        k0=round(f2)+1;    
+        disp('频率校正值:')
+        fff=floor(f2)+g(rr+1)
+        disp('振幅校正值:')
+        aaa=aa1(floor(f2)+1)
+        disp('初相位校正值:')
+        ppp=p1(rr+1)*180/pi    
+disp('----------4----------')        
+    rr=round(f3);
+        disp('主谱线位置:')
+        k0=round(f3)+1;    
+        disp('频率校正值:')
+        fff=floor(f3)+g(rr+1)
+        disp('振幅校正值:')
+        aaa=aa1(floor(f3)+1)
+        disp('初相位校正值:')
+        ppp=p1(rr+1)*180/pi        
+disp('----------5----------')        
+    rr=round(f4);
+        disp('主谱线位置:')
+        k0=round(f4)+1;    
+        disp('频率校正值:')
+        fff=floor(f4)+g(rr+1)
+        disp('振幅校正值:')
+        aaa=aa1(floor(f4)+1)
+        disp('初相位校正值:')
+        ppp=p1(rr+1)*180/pi    
