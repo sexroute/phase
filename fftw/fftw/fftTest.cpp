@@ -123,6 +123,10 @@ int CFFT_Wrapper::FFT2( double * apInput,
 		double ldblPhase = atan(ldblImage/ldblReal)/_FFT_PI*180.0;
 		ldblPhase = (int)(ldblPhase*100)%36000;
 		ldblPhase = ldblPhase/100;		
+		if (ldblPhase<0)
+		{
+			ldblPhase += 360.00;
+		}
 		apOutPutAmp[i] = ldblMag;
 		apOutPutPhase[i]= ldblPhase;
 	}
@@ -136,5 +140,59 @@ int CFFT_Wrapper::FFT2( double * apInput,
 	fftw_free(lpOut); 
 
 	return ERR_NO_ERROR;
+}
+
+int CFFT_Wrapper::APFFT( double *apInput, 
+						 double * apInputFreqSequenceToAdjust, 
+						 double * apOutPutAmp, 
+						 double * apOutPutPhase, 
+						 double * apOutPutFrequence, 
+						 int anInputLength, 
+						 int anFreqSequenceLength, 
+						 int& anOutputLength )
+{
+	//1. parameter check
+	if (NULL == apInput)
+	{
+		return ERR_NULL_INPUT_BUFFER;
+	}
+
+	if (NULL == apOutPutAmp)
+	{
+		return ERR_NULL_OUTPUT_AMP_BUFFER;
+	}
+
+	if (NULL == apOutPutPhase)
+	{
+		return ERR_NULL_OUTPUT_PHASE_BUFFER;
+	}
+
+	if (NULL == apOutPutFrequence)
+	{
+		return ERR_NULL_OUTPUT_FREQ_BUFFER;
+	}
+
+	if (NULL == apInputFreqSequenceToAdjust)
+	{
+		return ERR_NULL_INPUT_FREQ_SEQUENCE_BUFFER;
+	}
+
+	if (anInputLength<=16)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	if (anFreqSequenceLength<1)
+	{
+		return ERR_INVALID_INPUT_FREQUENCE_LENGTH;
+	}
+
+	if (anOutputLength<(anFreqSequenceLength))
+	{
+		anOutputLength= (anFreqSequenceLength);
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	//2.¹¹Ôìhanning´°
 }
 

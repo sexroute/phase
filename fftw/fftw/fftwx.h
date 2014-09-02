@@ -57,6 +57,15 @@ public:
 					 double * apOutPutPhase,
 					 int   anInputLength,
 					 int& anOutputLength); 
+
+	static int APFFT(	double *apInput,
+						double * apInputFreqSequenceToAdjust,
+						double * apOutPutAmp,
+						double * apOutPutPhase,
+						double * apOutPutFrequence,
+						int anInputLength,
+						int anFreqSequenceLength,
+						int& anOutputLength);
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
@@ -64,12 +73,17 @@ public:
 		ERR_NULL_OUTPUT_IMG_BUFFER ,
 		ERR_NULL_OUTPUT_REAL_BUFFER ,
 		ERR_INVALID_INPUT_LENGTH,
+		ERR_INVALID_INPUT_FREQUENCE_LENGTH,
 		ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH,
 		ERR_NULL_OUTPUT_AMP_BUFFER ,
 		ERR_NULL_OUTPUT_PHASE_BUFFER ,
+		ERR_NULL_OUTPUT_FREQ_BUFFER,
+		ERR_NULL_INPUT_FREQ_SEQUENCE_BUFFER,
 	};
 protected:
 private:
 };
+
+
 
 
