@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fftw", "fftw\fftw.vcproj", "{4BA25EC3-1410-4607-8999-FE04C586351F}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{4BA25EC3-1410-4607-8999-FE04C586351F}.Debug.ActiveCfg = Debug|Win32
+		{4BA25EC3-1410-4607-8999-FE04C586351F}.Debug.Build.0 = Debug|Win32
+		{4BA25EC3-1410-4607-8999-FE04C586351F}.Release.ActiveCfg = Release|Win32
+		{4BA25EC3-1410-4607-8999-FE04C586351F}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
