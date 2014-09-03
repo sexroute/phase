@@ -36,9 +36,11 @@ public:
 	//************************************
 	static int FFT2( double * apInput,
 					double * apOutPutAmp,
-					double * apOutPutPhase,
+					double * apOutPutPhase,					
 					int   anInputLength,
-					int& anOutputLength); 
+					int& anOutputLength,
+					double adblRatio=2,
+					double adblPhaseDiff=90); 
 
 	//************************************
 	// Method:    FFT3 高性能FFT,采样点截止到2的整数次幂
@@ -63,9 +65,21 @@ public:
 						double * apOutPutAmp,
 						double * apOutPutPhase,
 						double * apOutPutFrequence,
+						double adblSampleFreq,
 						int anInputLength,
-						int anFreqSequenceLength,
-						int& anOutputLength);
+						int anInputFreqSequenceLength,
+						int& anOutputLength,
+						double adblRatio=2,
+						double adblPhaseDiff=90);
+
+	static int WindowedWave(float *apInput, int anInputLength,int type);
+	
+	static double Round(double r);
+
+	static int Sign(double arData);
+
+	static int IsZero(double adblData);
+	
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
@@ -79,6 +93,15 @@ public:
 		ERR_NULL_OUTPUT_PHASE_BUFFER ,
 		ERR_NULL_OUTPUT_FREQ_BUFFER,
 		ERR_NULL_INPUT_FREQ_SEQUENCE_BUFFER,
+		ERR_UNKOWN_WINDOW_TYPE,
+		ERR_ERROR_SAMPLE_FREQUENCE
+	};
+	enum _WINDOW_TYPE
+	{
+		WINDOW_HANNING=0,
+		WINDOW_HAMMING=1,
+		WINDOW_BLACKMAN=2,
+		WINDOW_NO =3		
 	};
 protected:
 private:

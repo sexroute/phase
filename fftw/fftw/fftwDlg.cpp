@@ -165,13 +165,16 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoData;
 	std::vector<double> lvoAmp;
 	std::vector<double> lvoPhase;
+	std::vector<double> lvoFreq;
+	std::vector<double> lvoFreqToAdjust;
 	while (!lofile.eof())
 	{		
 		double ldblData = 0;
 		lofile>>ldblData;
 		lvoData.push_back(ldblData);
 	}
-
+	
+	//1. test fft
 	lvoAmp.resize(lvoData.size());
 	lvoPhase.resize(lvoData.size());
 	int lnDataSize = lvoData.size();
@@ -181,5 +184,44 @@ void CfftwDlg::OnBnClickedOk()
 		lvoData.size(),
 		lnDataSize);
 	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);
+
+	//2. test apfft
+	double ldblSampeRate = 25600;
+
+	double ldblF0 =25.00;
+
+	lvoAmp.clear();
+
+	lvoPhase.clear();
+
+	lvoFreq.clear();
+
+	lvoAmp.resize(lvoData.size());
+
+	lvoPhase.resize(lvoData.size());
+
+	lvoFreq.resize(lvoData.size());
+
+	lvoFreqToAdjust.clear();
+
+	lvoFreqToAdjust.push_back(ldblF0);
+
+	lvoFreqToAdjust.push_back(ldblF0*2);
+
+	lvoFreqToAdjust.push_back(ldblF0*3);
+
+	lvoFreqToAdjust.push_back(ldblF0*4);
+
+	lnDataSize = lvoData.size();
+
+	lnRet = CFFT_Wrapper::APFFT(&lvoData.front(),
+								&lvoFreqToAdjust.front(),
+								&lvoAmp.front(),
+								&lvoPhase.front(),
+								&lvoFreq.front(),
+								ldblSampeRate,
+								lvoData.size(),
+								lvoFreqToAdjust.size(),
+								lnDataSize);
 
 }
