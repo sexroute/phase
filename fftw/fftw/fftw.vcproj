@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="fftw"
 	ProjectGUID="{4BA25EC3-1410-4607-8999-FE04C586351F}"
+	RootNamespace="fftw"
 	Keyword="MFCProj">
 	<Platforms>
 		<Platform
@@ -34,6 +35,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;lib\$(ConfigurationName)\&quot;"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				TargetMachine="1"/>
@@ -85,6 +87,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;lib\$(ConfigurationName)\&quot;"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
