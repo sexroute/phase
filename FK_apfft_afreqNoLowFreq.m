@@ -32,8 +32,7 @@ Deltaf=fs/NFFT;
 
 y1 = y(NFFT:2*NFFT-1);%后N个输入数据
 win =  hanning(NFFT)';
-lnSum = sum(win);
-win1 = win/lnSum;%窗归1
+win1 = win/sum(win);%窗归1
 y1= y1.*win1;
 y1_fft = fft(y1,NFFT);  %%% FFT Cal No1 of 2
 a1 = abs(y1_fft);%FFT振幅谱
@@ -42,7 +41,6 @@ p1 = mod(phase(y1_fft)*180/pi,360);%FFT相位谱
 
 y2 = y(1:2*NFFT-1);%后N个输入数据
 winn =  conv(win,win);%apFFT须要卷积窗  卷积
-ldblSumData = sum(winn);
 win2 = winn/sum(winn);%窗归1
 y2= y2.*win2;
 y2=y2(NFFT:end)+[0 y2(1:NFFT-1)];%构成长N的apFFT输入数据
@@ -90,8 +88,7 @@ mod_f=(r1-1+df(r))*fs/NFFT;
       mod_a=aa(r);
 %目标频率的初相位校正值
       mod_p=p2(r);                                             %数据中点初相位
-      temp = 2*pi*mod_f*(NFFT-1)/fs*180/pi;
-      mod_p=mod_p-mod(temp,360)+90;   %数据初始点初相位
+      mod_p=mod_p-mod(2*pi*mod_f*(NFFT-1)/fs*180/pi,360)+90;   %数据初始点初相位
       mod_p=mod(mod_p,360);
       
 for i=1:length(Fr)  %特殊处理低频部分
