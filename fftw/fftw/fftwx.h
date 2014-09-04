@@ -80,6 +80,14 @@ public:
 
 	static int IsZero(double adblData);
 	
+	static int Conv(double * apInputA, 
+			double * apInputB, 
+			double * apOutBuffer,
+			int anInputALength, 
+			int anInputBLength,
+			int & anOutputBufferLength,
+			double adblRatio=1);
+	
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
@@ -94,7 +102,9 @@ public:
 		ERR_NULL_OUTPUT_FREQ_BUFFER,
 		ERR_NULL_INPUT_FREQ_SEQUENCE_BUFFER,
 		ERR_UNKOWN_WINDOW_TYPE,
-		ERR_ERROR_SAMPLE_FREQUENCE
+		ERR_ERROR_SAMPLE_FREQUENCE,
+		ERR_NULL_INPUT_B_BUFFER ,
+		ERR_INVALID_INPUT_B_LENGTH,
 	};
 	enum _WINDOW_TYPE
 	{

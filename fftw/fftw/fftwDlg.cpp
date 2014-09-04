@@ -178,12 +178,15 @@ void CfftwDlg::OnBnClickedOk()
 	lvoAmp.resize(lvoData.size());
 	lvoPhase.resize(lvoData.size());
 	int lnDataSize = lvoData.size();
-	int lnRet =CFFT_Wrapper::FFT2(&lvoData.front(),
+	int lnRet =0;
+	
+/*
+	 lnRet =CFFT_Wrapper::FFT2(&lvoData.front(),
 		&lvoAmp.front(),
 		&lvoPhase.front(),
 		lvoData.size(),
 		lnDataSize);
-	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);
+	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);*/
 
 	//2. test apfft
 	double ldblSampeRate = 25600;
@@ -220,7 +223,7 @@ void CfftwDlg::OnBnClickedOk()
 								&lvoPhase.front(),
 								&lvoFreq.front(),
 								ldblSampeRate,
-								lvoData.size(),
+								lvoData.size()-1,
 								lvoFreqToAdjust.size(),
 								lnDataSize);
 

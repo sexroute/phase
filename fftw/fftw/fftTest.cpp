@@ -198,6 +198,63 @@ int CFFT_Wrapper::FFT2( double * apInput,
 	return ERR_NO_ERROR;
 }
 
+int CFFT_Wrapper::Conv(double * apInputA, 
+					   double * apInputB, 
+					   double * apOutBuffer,
+					   int anInputALength, 
+					   int anInputBLength,
+					   int & anOutputBufferLength,
+					   double adblRatio/*=1*/)
+{
+	if (NULL == apInputA)
+	{
+		return ERR_NULL_INPUT_BUFFER;
+	}
+
+	if (NULL == apInputB)
+	{
+		return ERR_NULL_INPUT_B_BUFFER;
+	}
+
+	if (NULL == apOutBuffer )
+	{
+		return ERR_NULL_OUTPUT_REAL_BUFFER;
+	}
+	
+	if (anInputALength<=0)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	if (anInputBLength<=0)
+	{
+		return ERR_INVALID_INPUT_B_LENGTH;
+	}
+
+	int lnConvLength = (anInputALength+anInputBLength-1);
+	
+	if (anOutputBufferLength<lnConvLength)
+	{
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	int i, j;
+	
+	ZeroMemory(apOutBuffer,anOutputBufferLength*sizeof(double));
+
+	for (i = 0; i < lnConvLength; i++) 
+	{
+		for (j = max(0, i + 1 - anInputBLength); j <= min(i, anInputALength - 1); j++) 
+		{
+			apOutBuffer[i] += apInputA[j] * apInputB[i - j];
+		}		
+	}
+
+	anOutputBufferLength = lnConvLength;
+
+	return ERR_NO_ERROR;
+}
+
 double CFFT_Wrapper::Round(double r)
 {
 	return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
@@ -297,17 +354,17 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	
 	int lnBufferLength = floor(((double)anInputLength+1)/2.0);
 	
-	std::vector<double> loHanning(lnBufferLength);
+	std::vector<double> loHanning(anInputLength);
 	
-	std::vector<double> loHanning2(lnBufferLength);
+	std::vector<double> loHanning2(anInputLength);
 
-	std::vector<double> loHanning_normalize(lnBufferLength);
+	std::vector<double> loHanning_normalize(anInputLength);
 
-	std::vector<double> loHanning2_normalize(lnBufferLength);
+	std::vector<double> loHanning2_normalize(anInputLength);
 
-	std::vector<double> loHanningCov(lnBufferLength);
+	std::vector<double> loHanningCov(anInputLength);
 
-	std::vector<double> loHanningCov_normalize(lnBufferLength);
+	std::vector<double> loHanningCov_normalize(anInputLength);
 
 	std::vector<double> loY2Out(lnBufferLength);
 
@@ -342,17 +399,35 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	
 	//2.0 生成hanning窗函数
 
-	for(int i=0;i<lnBufferLength;i++)        
+	int lnHanningHalfLength = lnBufferLength/2;
+
+	//先假设，要确保到这里的是偶数
+
+	for(int i=0;i<lnHanningHalfLength;i++)        
 	{
-		loHanning[i]=0.5-0.5*cos(2*_FFT_PI*i/lnBufferLength); 
+		loHanning[i]=0.5*(1-cos(2.0*_FFT_PI*((double)i+1.0)/((double)lnBufferLength+1))); 
 
 		ldblHanningSum = ldblHanningSum+ loHanning[i];
 
-		loHanning2[lnBufferLength-1-i]=0.5-0.5*cos(2*_FFT_PI*i/lnBufferLength);
-		
-		ldblHanningSum2 = ldblHanningCovSum+ loHanning2[lnBufferLength-1-i];
+		loHanning[lnBufferLength-1-i] = loHanning[i];
 
+		loHanning2[lnBufferLength+i] = loHanning[i];
+
+		loHanning2[anInputLength-1-i]=loHanning[i];
+		
+		ldblHanningCovSum = ldblHanningCovSum+ loHanning2[anInputLength-1-i];
+
+		if (i==lnHanningHalfLength-1)
+		{
+			double ldbTest = loHanning[i];
+
+			ldbTest = loHanning[i];
+		}
 	}
+
+	ldblHanningSum = ldblHanningSum*2;
+
+	ldblHanningCovSum = ldblHanningCovSum*2;
 
 	for (int i=0;i<lnBufferLength;i++)
 	{
@@ -369,29 +444,35 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	int lnCovLength = 2*lnBufferLength-1;
 
-	for(int n=0;n< lnCovLength;n++)    //卷积窗
+	if (loHanningCov.size()<lnCovLength)
 	{
-		loHanningCov[n]=0;
+		loHanningCov.resize(lnCovLength,.0);
+	}
 
-		if(0<=n&&n<=lnBufferLength-1)
-		{
-			for(int m=0;m<=n;m++)
-			{
-				loHanningCov[n]+=loHanning[m]*loHanning2[n-m];
-			}
-		}
-		else
-		{
-			for(int m=n-lnBufferLength+1;m<=lnBufferLength-1;m++)
-			{
-				loHanningCov[n]+=loHanning[m]*loHanning2[n-m];
-			}
-		}
-	}//for(int n=0;n< lnCovLength;n++)    //卷积窗
+	//2.1.1 卷积窗
+
+	int lnRet = CFFT_Wrapper::Conv(&loHanning_normalize.front(),
+								   &loHanning_normalize.front(),
+								   &loHanningCov.front(),
+								    lnBufferLength,
+								    lnBufferLength,
+								   lnCovLength,
+								   1);
+
+	double * ldblLast = &loHanningCov[(lnCovLength-1)/2];
+	
+	if (lnRet!=CFFT_Wrapper::ERR_NO_ERROR)
+	{
+		ASSERT(FALSE);
+
+		return lnRet;
+	}
+
+
 
 	for(int n=0;n< lnCovLength;n++)
 	{
-		loHanningCov_normalize[n] = loHanningCov_normalize[n]/ldblHanningCovSum;
+		loHanningCov_normalize[n] = loHanningCov[n]/ldblHanningCovSum;
 	}
 
 	//2.2  y1= y1.*win1;
@@ -440,13 +521,23 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	int lnY2FFTLength = loFFTY2Out.size();
 	
-	int lnRet = CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,1,0);
+	int lnRetY1 = CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,1,0);
 
-	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);
+	if (lnRetY1!=CFFT_Wrapper::ERR_NO_ERROR)
+	{
+		ASSERT(FALSE);
+
+		return lnRetY1;
+	}
 	
 	int lnRetY2 = CFFT_Wrapper::FFT2(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,1,0);
 
-	ASSERT(lnRetY2 == CFFT_Wrapper::ERR_NO_ERROR);
+	if (lnRetY2!=CFFT_Wrapper::ERR_NO_ERROR)
+	{
+		ASSERT(FALSE);
+
+		return lnRetY2;
+	}
 
 	//3.2 
 	/************************************************************************/
