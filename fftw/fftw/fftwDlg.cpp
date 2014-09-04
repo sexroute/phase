@@ -11,6 +11,9 @@
 #include <vector>
 #include <iostream>
 #include <iosfwd>
+#include "Sigdefine.h"
+#include "SigMath.h"
+#include "DebugHelper.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -217,6 +220,10 @@ void CfftwDlg::OnBnClickedOk()
 
 	lnDataSize = lvoData.size();
 
+	_DECLARE_PERF_MEASURE_TIME()
+
+	_BEGIN_PERF_MEASURE_TIME();
+
 	lnRet = CFFT_Wrapper::APFFT(&lvoData.front(),
 								&lvoFreqToAdjust.front(),
 								&lvoAmp.front(),
@@ -226,5 +233,24 @@ void CfftwDlg::OnBnClickedOk()
 								lvoData.size()-1,
 								lvoFreqToAdjust.size(),
 								lnDataSize);
+
+	_END_PERF_MEASURE_TIME("APFFT");
+
+	CSigMath SigMath;		 
+	vector<SSigParam> vSigComponet;
+	vSigComponet.resize(4);
+	double fSpecCorrectFreq_;
+	fSpecCorrectFreq_ = double(ldblF0);
+	int iSampleRate = ldblSampeRate;
+
+	_BEGIN_PERF_MEASURE_TIME();
+	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
+													fSpecCorrectFreq_, 
+													iSampleRate, 
+													lvoData.size()-1, 
+													vSigComponet, 
+													E_SpectrumType_Peak_Peak);		
+
+	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 }
