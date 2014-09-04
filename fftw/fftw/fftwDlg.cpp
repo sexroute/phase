@@ -213,7 +213,7 @@ void CfftwDlg::OnBnClickedOk()
 
 	lvoFreqToAdjust.push_back(ldblF0*3);
 
-	lvoFreqToAdjust.push_back(ldblF0*4);
+	lvoFreqToAdjust.push_back(ldblF0*0.5);
 
 	lnDataSize = lvoData.size();
 

@@ -39,8 +39,10 @@ public:
 					double * apOutPutPhase,					
 					int   anInputLength,
 					int& anOutputLength,
+					BOOL abDividLength = 1,
 					double adblRatio=2,
-					double adblPhaseDiff=90); 
+					double adblPhaseDiff=90
+					); 
 
 	//************************************
 	// Method:    FFT3 高性能FFT,采样点截止到2的整数次幂
@@ -88,6 +90,8 @@ public:
 			int & anOutputBufferLength,
 			double & ldblSum,
 			double adblRatio=1);
+
+	static double MatlabMod(double adblX,double adblY);
 	
 	enum _EER_CODE_
 	{

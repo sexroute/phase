@@ -6,6 +6,23 @@
 #pragma comment(lib,"libfftw3-3.lib")
 #define _FFT_PI 3.1415926535898
 
+double CFFT_Wrapper::MatlabMod(double adblX,double adblY)
+{
+	if (CFFT_Wrapper::IsZero(adblY))
+	{
+		return adblX;
+	}
+
+	if (CFFT_Wrapper::IsZero(adblX-adblY))
+	{
+		return adblX;		
+	}
+
+	double ldblMod = adblX - floor(adblX/adblY)*adblY;
+
+	return ldblMod;
+}
+
 int CFFT_Wrapper::WindowedWave(float *apInput, int anInputLength,int type)
 {
 	//1.check parameter
@@ -121,10 +138,11 @@ int CFFT_Wrapper::FFT2( double * apInput,
 					   double * apOutPutPhase, 
 					   int anInputLength, 
 					   int& anOutputLength,
+					   BOOL abDividLength /*= 1*/,
 					   double adblRatio/*=2*/,
-					   double adblPhaseDiff/*=90*/)
+					   double adblPhaseDiff/*=90*/
+					   )
 {
-	//1. parameter check
 	if (NULL == apInput)
 	{
 		return ERR_NULL_INPUT_BUFFER;
@@ -144,12 +162,34 @@ int CFFT_Wrapper::FFT2( double * apInput,
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
-
-	if (anOutputLength<(anInputLength/2))
+	
+	//保证是偶数
+	if (anInputLength%2!=0)
 	{
-		anOutputLength= ceil(double(anInputLength)/2);
+		anInputLength = anInputLength-1;
+	}
+
+	int lnDividLength = 1;
+
+	int lnActuralOutputLength = anInputLength;
+
+	if (abDividLength)
+	{
+		lnDividLength = anInputLength/2;
+
+		lnActuralOutputLength = ceil(double(anInputLength)/2);
+	}
+
+	int lnFFTLoopLength = ceil(double(anInputLength)/2);
+
+	if (anOutputLength<lnActuralOutputLength)
+	{
+		anOutputLength= lnActuralOutputLength;
+
 		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
 	}
+	
+	anOutputLength = lnActuralOutputLength;	
 
 	//2.do fftw3
 	fftw_complex * lpOut = NULL;
@@ -171,25 +211,48 @@ int CFFT_Wrapper::FFT2( double * apInput,
 	fftw_execute_dft_r2c(p,apInput,lpOut);
 
 
-	for (int i=0;i<anOutputLength;i++)
+
+	for (int i=0;i<lnFFTLoopLength;i++)
 	{
 		double ldblReal = lpOut[i][0];
+
 		double ldblImage  = lpOut[i][1];
-		double ldblMag = sqrt((ldblReal * ldblReal) + (ldblImage * ldblImage))*adblRatio*2/anInputLength;
-		double ldblPhase = atan(ldblImage/ldblReal)/_FFT_PI*180.0;
-		ldblPhase = (int)(ldblPhase*100)%36000;
-		ldblPhase = ldblPhase/100;		
+
+		double ldblMag = sqrt((ldblReal * ldblReal) + (ldblImage * ldblImage))*adblRatio/lnDividLength;
+
+		double ldblPhase = atan2(ldblImage,ldblReal)/_FFT_PI*180.0;
+
+		ldblPhase = (int)(ldblPhase*10000)%3600000;
+
+		ldblPhase = ldblPhase/10000;	
+
 		if (ldblPhase<0)
 		{
 			ldblPhase += 360.00;
 		}
+
 		apOutPutAmp[i] = ldblMag;
+
 		apOutPutPhase[i]= ldblPhase+adblPhaseDiff;
+		
+		if (i==0)
+		{
+			continue;
+		}
+
+		if (lnFFTLoopLength<lnActuralOutputLength)
+		{
+			apOutPutAmp[lnFFTLoopLength*2-i] = apOutPutAmp[i];
+
+			apOutPutPhase[lnFFTLoopLength*2-i] = apOutPutPhase[i];
+		}
+
 	}
 	
 	//处理零点
-	apOutPutAmp[0] = apOutPutAmp[0]/anInputLength;
-	apOutPutPhase[0] = apOutPutPhase[0]/anInputLength;
+	apOutPutAmp[0] = apOutPutAmp[0]/lnDividLength;
+
+	apOutPutPhase[0] = apOutPutPhase[0]/lnDividLength;
 
 	fftw_destroy_plan(p);
 
@@ -389,7 +452,10 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	std::vector<double> loFreqAdjust(anInputFreqSequenceLength);
 
+	std::vector<double> loInputCopy(anInputLength,0);
 
+	memcpy(&loInputCopy.front(),apInput,sizeof(double)*anInputLength);
+	
 	double ldblHanningSum = 0.0;
 
 	double ldblHanningSum2 = 0.0;
@@ -398,7 +464,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	double * lpY1 = &apInput[lnBufferLength-1];
 	
-	double * lpY2 =  &apInput[0];
+	double * lpY2 =  &loInputCopy[0];
 
 	double * lpY2Out = &loY2Out.front();
 
@@ -493,6 +559,8 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	 ldbldebug = lpY1[lnBufferLength-1];
 
+	 double * lpdebug = lpY1 + lnBufferLength-1;
+
 	//2.3 
 	/************************************************************************/
 	/* y2 = y(1:2*NFFT-1);%后N个输入数据
@@ -507,21 +575,23 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		lpY2[n] = lpY2[n]*loHanningCov_normalize[n];
 	}
 
-	double * lpdebug = &lpY2[lnCovLength-10];
+	// lpdebug = &lpY2[lnCovLength-10];
 	
 	//2.4 y2=y2(NFFT:end)+[0 y2(1:NFFT-1)]
 	for (int i = 0;i<lnBufferLength;i++)
 	{
 		if (i==0)
 		{
-			loY2Out[i]  =  lpY2[lnBufferLength+i] + 0;
+			loY2Out[i]  =  lpY2[lnBufferLength+i-1] + 0;
 		}
 		else
 		{
-			loY2Out[i] =   lpY2[lnBufferLength+i] +  lpY2[i+1] ;
+			loY2Out[i] =   lpY2[lnBufferLength+i-1] +  lpY2[i-1] ;
 		}
 		
 	}
+
+	lpdebug = &loY2Out[lnBufferLength-10];
 
 	//3.1 FFT
 	double * lpOutY1FFT = &loFFTY1Out.front();
@@ -536,7 +606,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	int lnY2FFTLength = loFFTY2Out.size();
 	
-	int lnRetY1 = CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,1,0);
+	int lnRetY1 = CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,0,1,0);
 
 	if (lnRetY1!=CFFT_Wrapper::ERR_NO_ERROR)
 	{
@@ -544,8 +614,12 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		return lnRetY1;
 	}
+
+	 ldbldebug = lpOutY1FFT[lnY1FFTLength-1];
+
+	 lpdebug  = &lpOutY1FFT[lnY1FFTLength/2-1];
 	
-	int lnRetY2 = CFFT_Wrapper::FFT2(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,1,0);
+	int lnRetY2 = CFFT_Wrapper::FFT2(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,0,1,0);
 
 	if (lnRetY2!=CFFT_Wrapper::ERR_NO_ERROR)
 	{
@@ -553,6 +627,14 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		return lnRetY2;
 	}
+
+	ldbldebug = lpOutY2FFT[lnY2FFTLength-1];
+
+	lpdebug  = &lpOutY2FFT[lnY2FFTLength/2-1];
+
+	ldbldebug = lpOutPhaseY2[lnY2FFTLength-1];
+
+	lpdebug  = &lpOutPhaseY2[lnY2FFTLength/2-1];
 
 	//3.2 
 	/************************************************************************/
@@ -562,11 +644,11 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	{
 		double ldblData = (lpOutPhaseY1[i]-lpOutPhaseY2[i])/180.0;
 		
-		int lnData =(int) (ldblData*100.0/(1.0-1.0/(double)lnBufferLength));
+		 ldblData = (ldblData/(1.0-1.0/(double)lnBufferLength));
 
-		lnData = lnData%100;
+		 ldblData = CFFT_Wrapper::MatlabMod(ldblData,1.0);
 
-		loDiff[i] = (double)lnData/100.0;
+		loDiff[i] = ldblData;
 	}
 
 	//3.3
@@ -580,17 +662,21 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loAmpDiff[i] = ldblData;
 	}
 
+	ldbldebug = loAmpDiff[lnBufferLength-1];
+
+	lpdebug  = &loAmpDiff[lnBufferLength-10];
+
 	//3.4 矫正谱第一个值处理
 	/************************************************************************/
 	/* aa(1)=a1(1)*2/NFFT*bei;
 	   p2(1)=0;
 	   df(1)=0;                                                            */
 	/************************************************************************/
-	loAmpDiff[0] = lpOutY1FFT[0]/lnBufferLength*adblRatio;
+	loAmpDiff[0] = lpOutY1FFT[0]*2/lnBufferLength*adblRatio;
 
 	lpOutPhaseY2[0] =.0;
 
-	loAmpDiff[0] = 0;
+	loDiff[0] =.0;
 
 	//3.5 目标频率的频率偏离校正值
 	/************************************************************************/
@@ -618,7 +704,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		int lnIndexTempFloor = floor(apInputFreqSequenceToAdjust[i]/ldblDf)+1;
 
-		loFreqAdjust[i] = (lnIndexTempFloor-1+ loDiff[lnIndexTempRound] )*adblSampleFreq/(double)lnBufferLength;
+		loFreqAdjust[i] = (lnIndexTempFloor-1+ loDiff[lnIndexTempRound-1] )*adblSampleFreq/(double)lnBufferLength;
 
 		double dmf=loFreqAdjust[i]-apInputFreqSequenceToAdjust[i];
 
@@ -642,11 +728,11 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		
 		double ldblFreqAdjusted = .0;
 
-		if (loFreqAdjust[i]<2*ldblDf)
+		if (apInputFreqSequenceToAdjust[i]<2*ldblDf)
 		{
 			loFreqAdjust[i] = ldblDf;
 
-			ldblAmpAdjusted = loAmpDiff[2];
+			ldblAmpAdjusted = loAmpDiff[1];
 
 			ldblPhaseAdjusted = 0;
 
@@ -663,23 +749,29 @@ int CFFT_Wrapper::APFFT( double *apInput,
 			mod_p=mod_p-mod(2*pi*mod_f*(NFFT-1)/fs*180/pi,360)+90;   %数据初始点初相位
 			mod_p=mod(mod_p,360);                                                                     */
 			/************************************************************************/
-			ldblAmpAdjusted = loAmpDiff[lnIndexTempRound];
+			ldblAmpAdjusted = loAmpDiff[lnIndexTempRound-1];
 
-			ldblPhaseAdjusted = lpOutPhaseY2[lnIndexTempRound];
-
-			double ldblTemp = 2*_FFT_PI*((double)lnBufferLength-1)*loDiff[lnIndexTempRound]\
-				/adblSampleFreq*180.0/_FFT_PI;
-
-			ldblTemp = ldblTemp*100.0;
-
-			ldblTemp =(double)((int)ldblTemp%36000)/100.0 + 90.0;
-
-			ldblPhaseAdjusted = ldblPhaseAdjusted - ldblTemp;
-			
-			ldblPhaseAdjusted = (double)((int)ldblPhaseAdjusted*100/36000)/100.0;								
+			ldblPhaseAdjusted = lpOutPhaseY2[lnIndexTempRound-1];
 
 			ldblFreqAdjusted = loFreqAdjust[i] ;
+
+			double ldblTemp = 2*_FFT_PI*((double)lnBufferLength-1)*ldblFreqAdjusted\
+				/adblSampleFreq*180.0/_FFT_PI;
+
+			ldblTemp = CFFT_Wrapper::MatlabMod(ldblTemp,360.0);			
+
+			ldblPhaseAdjusted = ldblPhaseAdjusted - ldblTemp;
+
+			ldblPhaseAdjusted = ldblPhaseAdjusted+ 90.0;
+			
 		}
+
+		if (ldblPhaseAdjusted<0)
+		{
+			ldblPhaseAdjusted += 360.0;
+		}
+
+		ldblPhaseAdjusted = CFFT_Wrapper::MatlabMod(ldblPhaseAdjusted,360.0);	
 
 		/************************************************************************/
 		/* 	 3.5.3 赋值输出 
