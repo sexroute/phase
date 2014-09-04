@@ -86,6 +86,7 @@ public:
 			int anInputALength, 
 			int anInputBLength,
 			int & anOutputBufferLength,
+			double & ldblSum,
 			double adblRatio=1);
 	
 	enum _EER_CODE_

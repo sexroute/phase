@@ -204,6 +204,7 @@ int CFFT_Wrapper::Conv(double * apInputA,
 					   int anInputALength, 
 					   int anInputBLength,
 					   int & anOutputBufferLength,
+					   double & ldblSum,
 					   double adblRatio/*=1*/)
 {
 	if (NULL == apInputA)
@@ -238,7 +239,9 @@ int CFFT_Wrapper::Conv(double * apInputA,
 		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
 	}
 
-	int i, j;
+	int i, j =0;
+
+	ldblSum = 0;
 	
 	ZeroMemory(apOutBuffer,anOutputBufferLength*sizeof(double));
 
@@ -247,7 +250,9 @@ int CFFT_Wrapper::Conv(double * apInputA,
 		for (j = max(0, i + 1 - anInputBLength); j <= min(i, anInputALength - 1); j++) 
 		{
 			apOutBuffer[i] += apInputA[j] * apInputB[i - j];
-		}		
+		}
+
+		ldblSum += apOutBuffer[i];
 	}
 
 	anOutputBufferLength = lnConvLength;
@@ -391,11 +396,13 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	double ldblHanningCovSum = 0.0;
 
-	double * lpY1 = &apInput[lnBufferLength];
+	double * lpY1 = &apInput[lnBufferLength-1];
 	
 	double * lpY2 =  &apInput[0];
 
 	double * lpY2Out = &loY2Out.front();
+
+	double ldbldebug = 0;
 	
 	//2.0 生成hanning窗函数
 
@@ -451,15 +458,16 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	//2.1.1 卷积窗
 
-	int lnRet = CFFT_Wrapper::Conv(&loHanning_normalize.front(),
-								   &loHanning_normalize.front(),
+	int lnRet = CFFT_Wrapper::Conv(&loHanning.front(),
+								   &loHanning.front(),
 								   &loHanningCov.front(),
 								    lnBufferLength,
 								    lnBufferLength,
-								   lnCovLength,
+								    lnCovLength,
+									ldblHanningCovSum,
 								   1);
 
-	double * ldblLast = &loHanningCov[(lnCovLength-1)/2];
+	double * ldblLast = &loHanningCov[lnCovLength-1];
 	
 	if (lnRet!=CFFT_Wrapper::ERR_NO_ERROR)
 	{
@@ -475,12 +483,15 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loHanningCov_normalize[n] = loHanningCov[n]/ldblHanningCovSum;
 	}
 
+	ldbldebug = loHanningCov_normalize[lnCovLength-1];
+
 	//2.2  y1= y1.*win1;
 	for (int i=0;i<lnBufferLength;i++)
 	{
-		double * lpCurrent = lpY1 + i;
-		* lpCurrent = * lpCurrent * loHanning_normalize[i];
+		lpY1[i]= lpY1[i]*loHanning_normalize[i];
 	}
+
+	 ldbldebug = lpY1[lnBufferLength-1];
 
 	//2.3 
 	/************************************************************************/
@@ -489,10 +500,14 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	  win2 = winn/sum(winn);%窗归1
 	  y2= y2.*win2;                                                         */
 	/************************************************************************/
+
+	 
 	for(int n=0;n< lnCovLength;n++)
 	{
 		lpY2[n] = lpY2[n]*loHanningCov_normalize[n];
 	}
+
+	double * lpdebug = &lpY2[lnCovLength-10];
 	
 	//2.4 y2=y2(NFFT:end)+[0 y2(1:NFFT-1)]
 	for (int i = 0;i<lnBufferLength;i++)
