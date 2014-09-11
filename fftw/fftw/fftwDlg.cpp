@@ -170,14 +170,12 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoFreqToAdjust;
 
 	double ldblSampeRate = 25600;
-	double ldblF0 =50;
+	double ldblF0 =25;
 	CString lstrfilename = "wave_001.txt";
-	lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+	//lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
 	//lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
 	std::ifstream lofile(lstrfilename.GetBuffer(0), ios::in);
 	
-	//lofile.open("wave001.txt");
-	//("C:/Users/eric/Documents/GitHub/phase/fftw/fftw/Debug/wave001.txt",ios::in);
 
 	DWORD ldwRet = ::GetLastError();
 	if (!lofile)
@@ -191,10 +189,8 @@ void CfftwDlg::OnBnClickedOk()
 	
 	while (!lofile.eof())
 	{		
-		//lofile.read(lpLineBuffer,100);
 		double ldblData = 0;
 		lofile>>ldblData;
-		//TRACE(_T("%f\r\n"),ldblData);
 		lvoData.push_back(ldblData);
 		
 	}
@@ -207,17 +203,9 @@ void CfftwDlg::OnBnClickedOk()
 	int lnDataSize = lvoData.size();
 	int lnRet =0;
 	
-/*
-	 lnRet =CFFT_Wrapper::FFT2(&lvoData.front(),
-		&lvoAmp.front(),
-		&lvoPhase.front(),
-		lvoData.size(),
-		lnDataSize);
-	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);*/
+
 
 	//2. test apfft
-
-
 	lvoAmp.clear();
 
 	lvoPhase.clear();
@@ -247,10 +235,25 @@ void CfftwDlg::OnBnClickedOk()
 
 	CSigMath SigMath;		 
 	vector<SSigParam> vSigComponet;
-	vSigComponet.resize(10);
+	vSigComponet.resize(4);
 	double fSpecCorrectFreq_;
 	fSpecCorrectFreq_ = double(ldblF0);
 	int iSampleRate = ldblSampeRate;
+	
+	if (lnDataSize%2!=0)
+	{
+		lnDataSize = lnDataSize-1;
+	}
+
+	_BEGIN_PERF_MEASURE_TIME();
+	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
+		fSpecCorrectFreq_, 
+		iSampleRate, 
+		lnDataSize, 
+		vSigComponet, 
+		E_SpectrumType_Peak_Peak);	
+
+	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 
 
@@ -269,15 +272,7 @@ void CfftwDlg::OnBnClickedOk()
 	_END_PERF_MEASURE_TIME("APFFT");
 
 
-	_BEGIN_PERF_MEASURE_TIME();
-	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
-		fSpecCorrectFreq_, 
-		iSampleRate, 
-		lvoData.size(), 
-		vSigComponet, 
-		E_SpectrumType_Peak_Peak);	
 
-	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 
 	for (int i=0;i<lvoFreqToAdjust.size();i++)

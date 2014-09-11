@@ -8,7 +8,7 @@
 #pragma comment(lib,"libfftw3-3.lib")
 #define _FFT_PI 3.1415926535898
 
-double CFFT_Wrapper::MatlabMod(double adblX,double adblY)
+inline double CFFT_Wrapper::MatlabMod(double adblX,double adblY)
 {
 	if (CFFT_Wrapper::IsZero(adblY))
 	{
@@ -597,6 +597,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 						 double adblPhaseDiff/*=90*/)
 {
 	_DECLARE_PERF_MEASURE_TIME();
+
 	_BEGIN_PERF_MEASURE_TIME();
 	//1. parameter check
 	if (NULL == apInput)
@@ -642,6 +643,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	if (anOutputLength<(anInputFreqSequenceLength))
 	{
 		anOutputLength= (anInputFreqSequenceLength);
+
 		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
 	}
 
@@ -649,7 +651,8 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	{
 		return ERR_ERROR_SAMPLE_FREQUENCE;
 	}
-	_END_PERF_MEASURE_TIME("0");
+
+	//_END_PERF_MEASURE_TIME("0");
 
 	//2.构造hanning窗
 	/************************************************************************/
@@ -709,8 +712,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	double ldbldebug = 0;
 
-	_END_PERF_MEASURE_TIME("1");
-
+	//_END_PERF_MEASURE_TIME("1");
 	_BEGIN_PERF_MEASURE_TIME();
 	
 	//2.0 生成hanning窗函数
@@ -750,7 +752,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loHanning_normalize[i] = loHanning[i]/ldblHanningSum;
 	}
 
-		_END_PERF_MEASURE_TIME("2.0");
+	//	_END_PERF_MEASURE_TIME("2.0");
 		_BEGIN_PERF_MEASURE_TIME();
 
 	//2.1 计算窗卷积
@@ -795,9 +797,6 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	_END_PERF_MEASURE_TIME("2.1");
 	_BEGIN_PERF_MEASURE_TIME();
 
-
-
-
 	double * ldblLast = &loHanningCov[lnCovLength-1];
 	
 	if (lnRet!=CFFT_Wrapper::ERR_NO_ERROR)
@@ -806,7 +805,6 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		return lnRet;
 	}
-
 
 
 	for(int n=0;n< lnCovLength;n++)
@@ -826,7 +824,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	 double * lpdebug = lpY1 + lnBufferLength-1;
 
-	 _END_PERF_MEASURE_TIME("2.2");
+	 //_END_PERF_MEASURE_TIME("2.2");
 	 _BEGIN_PERF_MEASURE_TIME();
 
 	//2.3 
@@ -859,7 +857,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		
 	}
 
-	_END_PERF_MEASURE_TIME("2.3");
+	//_END_PERF_MEASURE_TIME("2.3");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	lpdebug = &loY2Out[lnBufferLength-10];
@@ -925,7 +923,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loDiff[i] = ldblData;
 	}
 
-	_END_PERF_MEASURE_TIME("3.2");
+	//_END_PERF_MEASURE_TIME("3.2");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	//3.3
@@ -939,7 +937,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loAmpDiff[i] = ldblData;
 	}
 
-	_END_PERF_MEASURE_TIME("3.3");
+	//_END_PERF_MEASURE_TIME("3.3");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	ldbldebug = loAmpDiff[lnBufferLength-1];
