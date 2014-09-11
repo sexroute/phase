@@ -162,20 +162,43 @@ void CfftwDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	//1.load data
-	std::ifstream lofile;
-	lofile.open("wave_001.txt");
 	char lpLineBuffer[1024]={0};
 	std::vector<double> lvoData;
 	std::vector<double> lvoAmp;
 	std::vector<double> lvoPhase;
 	std::vector<double> lvoFreq;
 	std::vector<double> lvoFreqToAdjust;
+
+	double ldblSampeRate = 25600;
+	double ldblF0 =50;
+	CString lstrfilename = "wave_001.txt";
+	lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+	std::ifstream lofile(lstrfilename.GetBuffer(0), ios::in);
+	
+	//lofile.open("wave001.txt");
+	//("C:/Users/eric/Documents/GitHub/phase/fftw/fftw/Debug/wave001.txt",ios::in);
+
+	DWORD ldwRet = ::GetLastError();
+	if (!lofile)
+	{
+		 ldwRet = ::GetLastError();
+		CString lstrError;
+		lstrError.Format(_T("%s 不存在"),lstrfilename);
+		 AfxMessageBox(lstrError);
+		 return;
+	}
+	
 	while (!lofile.eof())
 	{		
+		//lofile.read(lpLineBuffer,100);
 		double ldblData = 0;
 		lofile>>ldblData;
+		//TRACE(_T("%f\r\n"),ldblData);
 		lvoData.push_back(ldblData);
+		
 	}
+
+
 	
 	//1. test fft
 	lvoAmp.resize(lvoData.size());
@@ -192,9 +215,7 @@ void CfftwDlg::OnBnClickedOk()
 	ASSERT(lnRet == CFFT_Wrapper::ERR_NO_ERROR);*/
 
 	//2. test apfft
-	double ldblSampeRate = 25600;
 
-	double ldblF0 =25.00;
 
 	lvoAmp.clear();
 
@@ -210,17 +231,35 @@ void CfftwDlg::OnBnClickedOk()
 
 	lvoFreqToAdjust.clear();
 
-	lvoFreqToAdjust.push_back(ldblF0);
+	lvoFreqToAdjust.push_back(ldblF0*0.5);
+
+	lvoFreqToAdjust.push_back(ldblF0*1);
 
 	lvoFreqToAdjust.push_back(ldblF0*2);
 
 	lvoFreqToAdjust.push_back(ldblF0*3);
 
-	lvoFreqToAdjust.push_back(ldblF0*0.5);
-
 	lnDataSize = lvoData.size();
 
 	_DECLARE_PERF_MEASURE_TIME()
+
+
+		CSigMath SigMath;		 
+	vector<SSigParam> vSigComponet;
+	vSigComponet.resize(4);
+	double fSpecCorrectFreq_;
+	fSpecCorrectFreq_ = double(ldblF0);
+	int iSampleRate = ldblSampeRate;
+
+	_BEGIN_PERF_MEASURE_TIME();
+	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
+		fSpecCorrectFreq_, 
+		iSampleRate, 
+		lvoData.size(), 
+		vSigComponet, 
+		E_SpectrumType_PEAK);	
+
+	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 	_BEGIN_PERF_MEASURE_TIME();
 
@@ -230,27 +269,25 @@ void CfftwDlg::OnBnClickedOk()
 								&lvoPhase.front(),
 								&lvoFreq.front(),
 								ldblSampeRate,
-								lvoData.size()-1,
+								lvoData.size(),
 								lvoFreqToAdjust.size(),
-								lnDataSize);
+								lnDataSize,2);
 
 	_END_PERF_MEASURE_TIME("APFFT");
 
-	CSigMath SigMath;		 
-	vector<SSigParam> vSigComponet;
-	vSigComponet.resize(4);
-	double fSpecCorrectFreq_;
-	fSpecCorrectFreq_ = double(ldblF0);
-	int iSampleRate = ldblSampeRate;
 
-	_BEGIN_PERF_MEASURE_TIME();
-	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
-													fSpecCorrectFreq_, 
-													iSampleRate, 
-													lvoData.size()-1, 
-													vSigComponet, 
-													E_SpectrumType_Peak_Peak);		
 
-	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
+
+
+	for (int i=0;i<lvoFreqToAdjust.size();i++)
+	{
+
+		zdlTraceLine("**********************************************");
+		zdlTraceLine(_T("Ap_FFT: Freq:%.4f,Amp:%.4f,Phase:%.4f"),lvoFreq[i],lvoAmp[i],lvoPhase[i]);
+		zdlTraceLine(_T("OlD_FFT: Freq:%.4f,Amp:%.4f,Phase:%.4f"),vSigComponet[i]._fFreq,vSigComponet[i]._fAmp,vSigComponet[i]._fPhase);
+	}
+
+
+
 
 }

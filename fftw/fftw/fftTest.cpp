@@ -208,7 +208,9 @@ int CFFT_Wrapper::FFT2( double * apInput,
 
 	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
 
-	fftw_execute_dft_r2c(p,apInput,lpOut);
+	//fftw_execute_dft_r2c(p,apInput,lpOut);
+
+	fftw_execute(p);
 
 
 
@@ -390,6 +392,11 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	if (NULL == apInputFreqSequenceToAdjust)
 	{
 		return ERR_NULL_INPUT_FREQ_SEQUENCE_BUFFER;
+	}
+
+	if (anInputLength%2!=0)
+	{
+		anInputLength = anInputLength-1;
 	}
 
 	if (anInputLength<=16)
@@ -769,6 +776,13 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		if (ldblPhaseAdjusted<0)
 		{
 			ldblPhaseAdjusted += 360.0;
+		}
+
+		ldblPhaseAdjusted = 90-ldblPhaseAdjusted;
+
+		if (ldblPhaseAdjusted<0)
+		{
+			ldblPhaseAdjusted = ldblPhaseAdjusted+360.0;
 		}
 
 		ldblPhaseAdjusted = CFFT_Wrapper::MatlabMod(ldblPhaseAdjusted,360.0);	
