@@ -170,9 +170,10 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoFreqToAdjust;
 
 	double ldblSampeRate = 25600;
-	double ldblF0 =50;
+	double ldblF0 =25;
 	CString lstrfilename = "wave_001.txt";
-	lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+	//lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+	//lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
 	std::ifstream lofile(lstrfilename.GetBuffer(0), ios::in);
 	
 	//lofile.open("wave001.txt");
@@ -255,9 +256,9 @@ void CfftwDlg::OnBnClickedOk()
 	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
 		fSpecCorrectFreq_, 
 		iSampleRate, 
-		lvoData.size(), 
+		lvoData.size()-1, 
 		vSigComponet, 
-		E_SpectrumType_PEAK);	
+		E_SpectrumType_Peak_Peak);	
 
 	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
@@ -271,7 +272,7 @@ void CfftwDlg::OnBnClickedOk()
 								ldblSampeRate,
 								lvoData.size(),
 								lvoFreqToAdjust.size(),
-								lnDataSize,2);
+								lnDataSize,4);
 
 	_END_PERF_MEASURE_TIME("APFFT");
 

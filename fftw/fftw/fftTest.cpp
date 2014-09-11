@@ -205,7 +205,7 @@ int CFFT_Wrapper::FFT2( double * apInput,
 
 	lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
 
-	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE);
 
 	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
 
