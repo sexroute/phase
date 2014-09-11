@@ -3,6 +3,7 @@
 #include <math.h>
 #include <vector>
 #include <float.h>
+#include <direct.h>
 #include "DebugHelper.h"
 #pragma comment(lib,"libfftw3-3.lib")
 #define _FFT_PI 3.1415926535898
@@ -326,12 +327,12 @@ int CFFT_Wrapper::Conv(double * apInputA,
 	return ERR_NO_ERROR;
 }
 
-double CFFT_Wrapper::Round(double r)
+inline double CFFT_Wrapper::Round(double r)
 {
 	return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 };
 
-int CFFT_Wrapper::IsZero(double adblData)
+inline int CFFT_Wrapper::IsZero(double adblData)
 {
 
 	if(abs(adblData)<=FLT_EPSILON  )
@@ -342,7 +343,7 @@ int CFFT_Wrapper::IsZero(double adblData)
 	return FALSE;
 }
 
-int CFFT_Wrapper::Sign(double arData)
+inline int CFFT_Wrapper::Sign(double arData)
 {
 	if (arData>0)
 	{
@@ -391,7 +392,7 @@ static unsigned short g_ccitt_table[256] = {
 	0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
 	0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 };
-int CFFT_Wrapper::CRC16( unsigned char *apInput, int anLength,unsigned short & asCRC )
+inline int CFFT_Wrapper::CRC16( unsigned char *apInput, int anLength,unsigned short & asCRC )
 {
 	if (NULL == apInput)
 	{
@@ -414,7 +415,7 @@ int CFFT_Wrapper::CRC16( unsigned char *apInput, int anLength,unsigned short & a
 	return ERR_NO_ERROR;
 }
 
-int CFFT_Wrapper::HASH( unsigned char *apInput, int anLength,unsigned int & anCRC )
+inline int CFFT_Wrapper::HASH( unsigned char *apInput, int anLength,unsigned int & anCRC )
 {
 	if (NULL == apInput)
 	{
@@ -436,6 +437,151 @@ int CFFT_Wrapper::HASH( unsigned char *apInput, int anLength,unsigned int & anCR
 	return ERR_NO_ERROR;
 
 }
+
+int CFFT_Wrapper::SaveHanningConv(double * apOutBuffer,
+								  int anInputALength, 
+								  int & anOutputBufferLength, 
+								  double  adblSum)
+{
+	if (NULL==apOutBuffer)
+	{
+		return ERR_NULL_OUTPUT_REAL_BUFFER;
+	}
+	
+	if (anInputALength <=16)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	if (anOutputBufferLength<(2*anInputALength-1))
+	{
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	unsigned int lnHashComputed = 0;
+
+	int lnRet = CFFT_Wrapper::HASH((unsigned char*)apOutBuffer,
+									anOutputBufferLength,
+									lnHashComputed);
+
+	mkdir("./hanning_cache");
+
+	CHAR lpFileName[100] = {0};
+
+	sprintf(lpFileName,("./hanning_cache/hanning_conv_%d.txt"),anInputALength);
+
+	FILE * lpFile = fopen(lpFileName,"wb+");
+
+	if (lpFile)
+	{
+		fwrite(
+			&lnHashComputed,
+			1*sizeof(int)/sizeof(char),
+			1,
+			lpFile);
+
+		fwrite(
+			&adblSum,
+			1*sizeof(double)/sizeof(char),
+			1,
+			lpFile);
+
+		fwrite(
+			apOutBuffer,
+			anOutputBufferLength*sizeof(double)/sizeof(char),
+			1,
+			lpFile);
+
+		fflush(lpFile);
+		fclose(lpFile);
+	}
+
+	return ERR_NO_ERROR;
+
+}
+
+int CFFT_Wrapper::LoadHanningConv(double * apOutBuffer, 
+								  int anInputALength, 
+								  int & anOutputBufferLength, 
+								  double & adblSum)
+{
+	if (NULL==apOutBuffer)
+	{
+		return ERR_NULL_OUTPUT_REAL_BUFFER;
+	}
+
+	if (anInputALength <=16)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	if (anOutputBufferLength<(2*anInputALength-1))
+	{
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	anOutputBufferLength= 2*anInputALength-1;	
+
+	int lnBufferDataLength = anOutputBufferLength + 2;
+
+	std::vector<double> loHanningCov2(lnBufferDataLength);
+	/************************************************************************/
+	/* int32      *1 hash
+	*  double     *2 sum
+	*  double ... *anOutputBufferLength
+	/************************************************************************/
+
+	int lnRealDataCharLength =  sizeof(int)+ sizeof(double) + anOutputBufferLength*sizeof(double);
+
+	mkdir("./hanning_cache");
+
+	CHAR lpFileName[100] = {0};
+
+	sprintf(lpFileName,("./hanning_cache/hanning_conv_%d.txt"),anInputALength);
+
+	FILE * lpFile = fopen(lpFileName,"rb+");
+
+	if (!lpFile)
+	{
+		return ERR_NO_CACHE;
+		
+	}else
+	{
+		fread(&loHanningCov2.front(),
+			lnRealDataCharLength,
+			1,
+			lpFile);
+		fclose(lpFile);
+	}
+	unsigned int * lpHash = ((unsigned int *)&loHanningCov2.front());
+
+	unsigned int lnHash = *lpHash;
+
+	lpHash = lpHash+1;
+
+	double * lpSum = (double *)lpHash;
+
+	adblSum = * lpSum;
+
+	double * lpCov = (lpSum+1);
+
+	unsigned int lnHashComputed = 0;
+
+	int lnRet = CFFT_Wrapper::HASH((unsigned char*)lpCov,
+											anOutputBufferLength,
+											lnHashComputed);
+
+	if (lnHashComputed!= lnHash)
+	{
+		anOutputBufferLength = 0;
+
+		return ERR_CACHE_CORRUPT;
+	}
+
+	memcpy(apOutBuffer,lpCov,sizeof(double)*anOutputBufferLength);
+
+	return ERR_NO_ERROR;
+}	
 
 
 int CFFT_Wrapper::APFFT( double *apInput, 
@@ -622,58 +768,35 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	//2.1.1 ¾í»ý´°
 
-	int lnRet = CFFT_Wrapper::Conv(&loHanning.front(),
-								   &loHanning.front(),
-								   &loHanningCov.front(),
-								    lnBufferLength,
-								    lnBufferLength,
-								    lnCovLength,
+	int lnRet = CFFT_Wrapper::LoadHanningConv(&loHanningCov.front(),
+											  lnBufferLength,
+											  lnCovLength,
+											  ldblHanningCovSum);
+	if (lnRet!= ERR_NO_ERROR)
+	{
+		lnRet = CFFT_Wrapper::Conv(&loHanning.front(),
+									&loHanning.front(),
+									&loHanningCov.front(),
+									lnBufferLength,
+									lnBufferLength,
+									lnCovLength,
 									ldblHanningCovSum,
-								   1);
+									1);
+
+		CFFT_Wrapper::SaveHanningConv(&loHanningCov.front(),
+										lnBufferLength,
+										lnCovLength,
+										ldblHanningCovSum);
+	}
+
+
 
 
 	_END_PERF_MEASURE_TIME("2.1");
 	_BEGIN_PERF_MEASURE_TIME();
-	unsigned int lsCRC = 0;
-	unsigned int lsCRC2 = 0;
 
-	std::vector<double> loHanningCov2(anInputLength);
 
-	FILE * lpFile = fopen("buffer.txt","rb+");
 
-	if (!lpFile)
-	{
-		lpFile = fopen("buffer.txt","wb+");
-
-		if (lpFile)
-		{
-			fwrite(
-					&loHanningCov.front(),
-					lnCovLength*sizeof(double)/sizeof(char),
-					1,
-					lpFile);
-			fflush(lpFile);
-			fclose(lpFile);
-		}
-	}else
-	{
-		fread(&loHanningCov2.front(),
-			lnCovLength*sizeof(double)/sizeof(char),
-			1,
-			lpFile);
-		fclose(lpFile);
-	}
-
-	lnRet = CFFT_Wrapper::HASH(	(unsigned char *)&loHanningCov.front(),
-														lnCovLength*sizeof(double)/sizeof(char),
-														lsCRC);
-
-	lnRet = CFFT_Wrapper::HASH(	(unsigned char *)&loHanningCov2.front(),
-														lnCovLength*sizeof(double)/sizeof(char),
-														lsCRC2);
-
-	_END_PERF_MEASURE_TIME("CRC");
-	_BEGIN_PERF_MEASURE_TIME();
 
 	double * ldblLast = &loHanningCov[lnCovLength-1];
 	

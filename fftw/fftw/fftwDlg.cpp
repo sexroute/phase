@@ -170,9 +170,9 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoFreqToAdjust;
 
 	double ldblSampeRate = 25600;
-	double ldblF0 =25;
+	double ldblF0 =50;
 	CString lstrfilename = "wave_001.txt";
-	//lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+	lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
 	//lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
 	std::ifstream lofile(lstrfilename.GetBuffer(0), ios::in);
 	

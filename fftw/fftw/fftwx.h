@@ -76,11 +76,11 @@ public:
 
 	static int WindowedWave(float *apInput, int anInputLength,int type);
 	
-	static double Round(double r);
+	static inline double Round(double r);
 
-	static int Sign(double arData);
+	static inline int Sign(double arData);
 
-	static int IsZero(double adblData);
+	static inline int IsZero(double adblData);
 	
 	static int Conv(double * apInputA, 
 			double * apInputB, 
@@ -91,11 +91,22 @@ public:
 			double & ldblSum,
 			double adblRatio=1);
 
-	static double MatlabMod(double adblX,double adblY);
+	static inline double MatlabMod(double adblX,double adblY);
 
-	static int CRC16(unsigned char *apInput, int anLength,unsigned short & asCRC);
+	static inline int CRC16(unsigned char *apInput, int anLength,unsigned short & asCRC);
 	
-	static int HASH(unsigned char *apInput, int anLength,unsigned int & anCRC);
+	static inline int HASH(unsigned char *apInput, int anLength,unsigned int & anCRC);
+	
+	static int LoadHanningConv(double * apOutBuffer, 
+								int anInputALength, 
+								int & anOutputBufferLength, 
+								double & ldblSum);
+
+	static int SaveHanningConv(double * apOutBuffer, 
+						int anInputALength, 
+						int & anOutputBufferLength, 
+						double adblSum);
+	
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
@@ -113,6 +124,8 @@ public:
 		ERR_ERROR_SAMPLE_FREQUENCE,
 		ERR_NULL_INPUT_B_BUFFER ,
 		ERR_INVALID_INPUT_B_LENGTH,
+		ERR_NO_CACHE,
+		ERR_CACHE_CORRUPT,
 	};
 	enum _WINDOW_TYPE
 	{
