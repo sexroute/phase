@@ -408,5 +408,8 @@ FFTW_DEFINE_API(FFTW_MANGLE_QUAD, __float128, fftwq_complex)
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */
-
+static void my_fftw_write_char(char c, void *f) { fputc(c, (FILE *)f);} ;
+#define fftw_export_wisdom_to_file(f) fftw_export_wisdom(my_fftw_write_char, (void*)(f))  
+static int my_fftw_read_char(void *f) { return fgetc((FILE *)f);}; 
+#define fftw_import_wisdom_from_file(f) fftw_import_wisdom(my_fftw_read_char, (void*)(f))
 #endif /* FFTW3_H */

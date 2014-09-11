@@ -7,6 +7,8 @@
 #include "DebugHelper.h"
 #pragma comment(lib,"libfftw3-3.lib")
 #define _FFT_PI 3.1415926535898
+#define _MIN_POINT 16
+unsigned int G_HARDWARE_ID = -1;
 
 inline double CFFT_Wrapper::MatlabMod(double adblX,double adblY)
 {
@@ -99,7 +101,7 @@ int CFFT_Wrapper::FFT(  double * apInput,
 		return ERR_NULL_OUTPUT_IMG_BUFFER;
 	}
 
-	if (anInputLength<=16)
+	if (anInputLength<=_MIN_POINT)
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
@@ -160,7 +162,7 @@ int CFFT_Wrapper::FFT2( double * apInput,
 		return ERR_NULL_OUTPUT_PHASE_BUFFER;
 	}
 
-	if (anInputLength<=16)
+	if (anInputLength<=_MIN_POINT)
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
@@ -264,6 +266,140 @@ int CFFT_Wrapper::FFT2( double * apInput,
 
 	return ERR_NO_ERROR;
 }
+
+int CFFT_Wrapper::FFT4( double * apInput, 
+										double * apOutPutAmp, 
+										double * apOutPutPhase, 
+										int anInputLength, 
+										int& anOutputLength,
+										BOOL abDividLength /*= 1*/,
+										double adblRatio/*=2*/,
+										double adblPhaseDiff/*=90*/
+										)
+{
+	if (NULL == apInput)
+	{
+		return ERR_NULL_INPUT_BUFFER;
+	}
+
+	if (NULL == apOutPutAmp)
+	{
+		return ERR_NULL_OUTPUT_AMP_BUFFER;
+	}
+
+	if (NULL == apOutPutPhase)
+	{
+		return ERR_NULL_OUTPUT_PHASE_BUFFER;
+	}
+
+	if (anInputLength<=_MIN_POINT)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	//保证是偶数
+	if (anInputLength%2!=0)
+	{
+		anInputLength = anInputLength-1;
+	}
+
+	int lnDividLength = 1;
+
+	int lnActuralOutputLength = anInputLength;
+
+	if (abDividLength)
+	{
+		lnDividLength = anInputLength/2;
+
+		lnActuralOutputLength = ceil(double(anInputLength)/2);
+	}
+
+	int lnFFTLoopLength = ceil(double(anInputLength)/2);
+
+	if (anOutputLength<lnActuralOutputLength)
+	{
+		anOutputLength= lnActuralOutputLength;
+
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	anOutputLength = lnActuralOutputLength;	
+
+	//2.do fftw3
+	fftw_complex * lpOut = NULL;
+
+	std::vector<double> loInput;
+
+	loInput.resize(anInputLength);
+
+	double * lpInput = &loInput.front();
+
+	fftw_plan p = NULL;
+
+	lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+
+	CFFT_Wrapper::LoadPlan(anInputLength);
+
+	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+
+	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
+
+	//fftw_execute_dft_r2c(p,apInput,lpOut);
+
+	fftw_execute(p);
+
+
+	for (int i=0;i<lnFFTLoopLength;i++)
+	{
+		double ldblReal = lpOut[i][0];
+
+		double ldblImage  = lpOut[i][1];
+
+		double ldblMag = sqrt((ldblReal * ldblReal) + (ldblImage * ldblImage))*adblRatio/lnDividLength;
+
+		double ldblPhase = atan2(ldblImage,ldblReal)/_FFT_PI*180.0;
+
+		ldblPhase = (int)(ldblPhase*10000)%3600000;
+
+		ldblPhase = ldblPhase/10000;	
+
+		if (ldblPhase<0)
+		{
+			ldblPhase += 360.00;
+		}
+
+		apOutPutAmp[i] = ldblMag;
+
+		apOutPutPhase[i]= ldblPhase+adblPhaseDiff;
+
+		if (i==0)
+		{
+			continue;
+		}
+
+		if (lnFFTLoopLength<lnActuralOutputLength)
+		{
+			apOutPutAmp[lnFFTLoopLength*2-i] = apOutPutAmp[i];
+
+			apOutPutPhase[lnFFTLoopLength*2-i] = apOutPutPhase[i];
+		}
+
+	}
+
+	//处理零点
+	apOutPutAmp[0] = apOutPutAmp[0]/lnDividLength;
+
+	apOutPutPhase[0] = apOutPutPhase[0]/lnDividLength;
+
+	CFFT_Wrapper::SavePlan(anInputLength);
+
+	fftw_destroy_plan(p);
+
+	fftw_free(lpOut); 
+
+	return ERR_NO_ERROR;
+}
+
 
 int CFFT_Wrapper::Conv(double * apInputA, 
 					   double * apInputB, 
@@ -415,6 +551,110 @@ inline int CFFT_Wrapper::CRC16( unsigned char *apInput, int anLength,unsigned sh
 	return ERR_NO_ERROR;
 }
 
+
+DWORD deax = 0;  
+DWORD debx = 0;  
+DWORD decx = 0;  
+DWORD dedx = 0; 
+
+void ExeCPUID(DWORD veax)  
+{
+	__asm
+	{
+		mov eax,veax
+			cpuid
+			mov deax,eax
+			mov debx,ebx
+			mov decx,ecx
+			mov dedx,edx
+	}
+}
+
+unsigned int CFFT_Wrapper::GetCPUTYPE()
+{
+	if (G_HARDWARE_ID==-1)
+	{
+		const DWORD id = 0x80000002; //从0x80000002开始,到0x80000004结束
+		unsigned char CPUType[49] = {0};//用来存储CPU型号信息
+
+		for(DWORD t = 0 ; t < 3 ; t++ )
+		{
+			ExeCPUID(id+t);
+			//每次循环结束,保存信息到数组
+			memcpy(CPUType+16*t+ 0,&deax,4);
+			memcpy(CPUType+16*t+ 4,&debx,4);
+			memcpy(CPUType+16*t+ 8,&decx,4);
+			memcpy(CPUType+16*t+12,&dedx,4);
+		}
+		unsigned int lnHashData = 0;
+		
+		CFFT_Wrapper::HASH(CPUType,49,lnHashData);
+
+		InterlockedExchange((volatile LONG *)&G_HARDWARE_ID,(LONG)lnHashData);
+	}
+
+	return G_HARDWARE_ID;
+}
+
+int CFFT_Wrapper::LoadPlan(int anInputLength)
+{
+	if (anInputLength<=_MIN_POINT)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	mkdir("./plan_cache");
+
+	char lpFileName[100] = {0};
+
+	unsigned int lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
+
+	sprintf(lpFileName,"./plan_cache/plan_%u_%d.txt",lnHardwareFeature,anInputLength);
+
+	FILE * lpFile = fopen(lpFileName,"r");
+
+	if (NULL == lpFile)
+	{
+		return ERR_NO_CACHE;
+	}
+
+	fftw_import_wisdom_from_file(lpFile); 
+	
+	fclose(lpFile);
+
+	return ERR_NO_ERROR;
+}
+
+
+int CFFT_Wrapper::SavePlan(int anInputLength)
+{
+	if (anInputLength<=_MIN_POINT)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	mkdir("./plan_cache");
+
+	char lpFileName[100] = {0};
+
+	unsigned lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
+
+	sprintf(lpFileName,"./plan_cache/plan_%u_%d.txt",lnHardwareFeature,anInputLength);
+
+	FILE * lpFile = fopen(lpFileName,"wb+");
+
+	if (NULL == lpFile)
+	{
+		return ERR_NO_CACHE;
+	}
+
+	fftw_export_wisdom_to_file(lpFile);
+
+	fclose(lpFile);
+
+	return ERR_NO_ERROR;
+}
+
 inline int CFFT_Wrapper::HASH( unsigned char *apInput, int anLength,unsigned int & anCRC )
 {
 	if (NULL == apInput)
@@ -448,7 +688,7 @@ int CFFT_Wrapper::SaveHanningConv(double * apOutBuffer,
 		return ERR_NULL_OUTPUT_REAL_BUFFER;
 	}
 	
-	if (anInputALength <=16)
+	if (anInputALength <=_MIN_POINT)
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
@@ -510,7 +750,7 @@ int CFFT_Wrapper::LoadHanningConv(double * apOutBuffer,
 		return ERR_NULL_OUTPUT_REAL_BUFFER;
 	}
 
-	if (anInputALength <=16)
+	if (anInputALength <=_MIN_POINT)
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
@@ -539,7 +779,7 @@ int CFFT_Wrapper::LoadHanningConv(double * apOutBuffer,
 
 	sprintf(lpFileName,("./hanning_cache/hanning_conv_%d.txt"),anInputALength);
 
-	FILE * lpFile = fopen(lpFileName,"rb+");
+	FILE * lpFile = fopen(lpFileName,"rb");
 
 	if (!lpFile)
 	{
@@ -594,7 +834,8 @@ int CFFT_Wrapper::APFFT( double *apInput,
 						 int anInputFreqSequenceLength, 
 						 int& anOutputLength,
 						 double adblRatio/*=2*/,
-						 double adblPhaseDiff/*=90*/)
+						 double adblPhaseDiff/*=90*/,
+						 int abStable /*= FALSE*/)
 {
 	_DECLARE_PERF_MEASURE_TIME();
 
@@ -630,7 +871,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		anInputLength = anInputLength-1;
 	}
 
-	if (anInputLength<=16)
+	if (anInputLength<=_MIN_POINT)
 	{
 		return ERR_INVALID_INPUT_LENGTH;
 	}
@@ -794,7 +1035,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 
 
-	_END_PERF_MEASURE_TIME("2.1");
+	//_END_PERF_MEASURE_TIME("2.1");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	double * ldblLast = &loHanningCov[lnCovLength-1];
@@ -875,7 +1116,15 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	int lnY2FFTLength = loFFTY2Out.size();
 	
-	int lnRetY1 = CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,0,1,0);
+	int lnRetY1 = ERR_NO_ERROR;
+
+	if (abStable)
+	{
+		lnRetY1= CFFT_Wrapper::FFT4(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,0,1,0);
+	}else
+	{
+		lnRetY1= CFFT_Wrapper::FFT2(lpY1,lpOutY1FFT,lpOutPhaseY1,lnBufferLength,lnY1FFTLength,0,1,0);
+	}	
 
 	if (lnRetY1!=CFFT_Wrapper::ERR_NO_ERROR)
 	{
@@ -888,7 +1137,16 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	 lpdebug  = &lpOutY1FFT[lnY1FFTLength/2-1];
 	
-	int lnRetY2 = CFFT_Wrapper::FFT2(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,0,1,0);
+	int lnRetY2 = ERR_NO_ERROR;
+	
+	if (abStable)
+	{
+		lnRetY2 = CFFT_Wrapper::FFT4(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,0,1,0);
+	}else
+	{
+		lnRetY2 = CFFT_Wrapper::FFT2(lpY2Out,lpOutY2FFT,lpOutPhaseY2,lnBufferLength,lnY2FFTLength,0,1,0);
+	}
+	
 
 	if (lnRetY2!=CFFT_Wrapper::ERR_NO_ERROR)
 	{
@@ -905,7 +1163,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	lpdebug  = &lpOutPhaseY2[lnY2FFTLength/2-1];
 
-	_END_PERF_MEASURE_TIME("3.1");
+	//_END_PERF_MEASURE_TIME("3.1");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	//3.2 
@@ -1049,7 +1307,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 			ldblPhaseAdjusted += 360.0;
 		}
 
-		ldblPhaseAdjusted = 90-ldblPhaseAdjusted;
+		//ldblPhaseAdjusted = 90-ldblPhaseAdjusted;
 
 		if (ldblPhaseAdjusted<0)
 		{
@@ -1071,7 +1329,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		apOutPutPhase[i] = ldblPhaseAdjusted;
 	}
 
-	_END_PERF_MEASURE_TIME("3.5");
+	//_END_PERF_MEASURE_TIME("3.5");
 	_BEGIN_PERF_MEASURE_TIME();
 
 	anOutputLength = anInputFreqSequenceLength;

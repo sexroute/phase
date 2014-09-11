@@ -62,6 +62,16 @@ public:
 					 int   anInputLength,
 					 int& anOutputLength); 
 
+	static int FFT4( double * apInput,
+							double * apOutPutAmp,
+							double * apOutPutPhase,					
+							int   anInputLength,
+							int& anOutputLength,
+							BOOL abDividLength = 1,
+							double adblRatio=2,
+							double adblPhaseDiff=90
+							); 
+
 	static int APFFT(	double *apInput,
 						double * apInputFreqSequenceToAdjust,
 						double * apOutPutAmp,
@@ -72,7 +82,8 @@ public:
 						int anInputFreqSequenceLength,
 						int& anOutputLength,
 						double adblRatio=2,
-						double adblPhaseDiff=90);
+						double adblPhaseDiff=90,
+						int abStable = FALSE);
 
 	static int WindowedWave(float *apInput, int anInputLength,int type);
 	
@@ -106,7 +117,10 @@ public:
 						int anInputALength, 
 						int & anOutputBufferLength, 
 						double adblSum);
-	
+
+	static int LoadPlan(int anInputLength);
+	static unsigned int GetCPUTYPE();
+	static int SavePlan(int anInputLength);
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
