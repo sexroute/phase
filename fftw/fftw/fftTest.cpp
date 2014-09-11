@@ -3,6 +3,7 @@
 #include <math.h>
 #include <vector>
 #include <float.h>
+#include "DebugHelper.h"
 #pragma comment(lib,"libfftw3-3.lib")
 #define _FFT_PI 3.1415926535898
 
@@ -368,6 +369,8 @@ int CFFT_Wrapper::APFFT( double *apInput,
 						 double adblRatio/*=2*/,
 						 double adblPhaseDiff/*=90*/)
 {
+	_DECLARE_PERF_MEASURE_TIME();
+	_BEGIN_PERF_MEASURE_TIME();
 	//1. parameter check
 	if (NULL == apInput)
 	{
@@ -419,13 +422,15 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	{
 		return ERR_ERROR_SAMPLE_FREQUENCE;
 	}
-
+	_END_PERF_MEASURE_TIME("0");
 
 	//2.构造hanning窗
 	/************************************************************************/
 	/* win =  hanning(NFFT)';
 	 * win1 = win/sum(win);%窗归1                                           */
 	/************************************************************************/
+
+	_BEGIN_PERF_MEASURE_TIME();
 	
 	int lnBufferLength = floor(((double)anInputLength+1)/2.0);
 	
@@ -476,6 +481,10 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	double * lpY2Out = &loY2Out.front();
 
 	double ldbldebug = 0;
+
+	_END_PERF_MEASURE_TIME("1");
+
+	_BEGIN_PERF_MEASURE_TIME();
 	
 	//2.0 生成hanning窗函数
 
@@ -516,6 +525,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loHanning2_normalize[lnBufferLength-1-i] = loHanning2[lnBufferLength-1-i]/ldblHanningSum2;//归一化
 	}
 
+		_END_PERF_MEASURE_TIME("2.0");
+		_BEGIN_PERF_MEASURE_TIME();
+
 	//2.1 计算窗卷积
 	/************************************************************************/
 	/* winn =  conv(win,win);%apFFT须要卷积窗  卷积
@@ -539,6 +551,10 @@ int CFFT_Wrapper::APFFT( double *apInput,
 								    lnCovLength,
 									ldblHanningCovSum,
 								   1);
+
+
+	_END_PERF_MEASURE_TIME("2.1");
+	_BEGIN_PERF_MEASURE_TIME();
 
 	double * ldblLast = &loHanningCov[lnCovLength-1];
 	
@@ -567,6 +583,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 	 ldbldebug = lpY1[lnBufferLength-1];
 
 	 double * lpdebug = lpY1 + lnBufferLength-1;
+
+	 _END_PERF_MEASURE_TIME("2.2");
+	 _BEGIN_PERF_MEASURE_TIME();
 
 	//2.3 
 	/************************************************************************/
@@ -597,6 +616,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		}
 		
 	}
+
+	_END_PERF_MEASURE_TIME("2.3");
+	_BEGIN_PERF_MEASURE_TIME();
 
 	lpdebug = &loY2Out[lnBufferLength-10];
 
@@ -643,6 +665,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	lpdebug  = &lpOutPhaseY2[lnY2FFTLength/2-1];
 
+	_END_PERF_MEASURE_TIME("3.1");
+	_BEGIN_PERF_MEASURE_TIME();
+
 	//3.2 
 	/************************************************************************/
 	/* df=mod((p1-p2)/180/(1-1/NFFT),1);%频率偏离校正值                                                                     */
@@ -658,6 +683,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 		loDiff[i] = ldblData;
 	}
 
+	_END_PERF_MEASURE_TIME("3.2");
+	_BEGIN_PERF_MEASURE_TIME();
+
 	//3.3
 	/************************************************************************/
 	/* aa=(a1.^2)./(a2+eps)*bei;  %振幅校正值                                                                     */
@@ -668,6 +696,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		loAmpDiff[i] = ldblData;
 	}
+
+	_END_PERF_MEASURE_TIME("3.3");
+	_BEGIN_PERF_MEASURE_TIME();
 
 	ldbldebug = loAmpDiff[lnBufferLength-1];
 
@@ -799,6 +830,9 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 		apOutPutPhase[i] = ldblPhaseAdjusted;
 	}
+
+	_END_PERF_MEASURE_TIME("3.5");
+	_BEGIN_PERF_MEASURE_TIME();
 
 	anOutputLength = anInputFreqSequenceLength;
 

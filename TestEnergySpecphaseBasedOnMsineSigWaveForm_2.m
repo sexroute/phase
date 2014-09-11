@@ -4,32 +4,35 @@
 %  Reupdate2014-9-5 14:40:08
 clear,clc
 close all
-DataDir    = 'E:\四川石化公用工程发电机启停机数据2014年1月21日\740-ST-0102A 20140108启机\';
 
-Fs = 25600;
-Ns0 = 8192;
-Rows = 200;
-
-
-
-DataName = 'SUD_740-ST-0102A_3H.txt';
-fid =fopen([DataDir,DataName]);
-VibSig = fscanf(fid, '%g', [Ns0 Rows]);   
-VibSig = VibSig'.*0.1;  % Convert to um
-fclose(fid);
-
-RPM = dlmread([DataDir,'SUD_740-ST-0102A_REV1.txt']);
-RPM = RPM(1:Rows);
-
-
-%%
-% 能量校正法
-clc
-DataNo = 150;
-xt = VibSig(DataNo,:);
-f0 = RPM(DataNo)/60;
-[Cf, CA, CP]= EnergySpecphaseBasedOnMsineSigWaveForm(xt,Fs,f0);
-myspecfft(xt,Fs,1);
+% DataDir    = 'E:\四川石化公用工程发电机启停机数据2014年1月21日\740-ST-0102A 20140108启机\';
+% DataDir    = './';
+% Fs = 25600;
+% Ns0 = 8192;
+% Rows = 200;
+% 
+% 
+% 
+% DataName = 'K4003_1H2014-08-28 152028.637.txt';
+% DataName = 'K4003_1H2014-08-28 152028.637.txt' ; Fs = 5120;f0 = 2986/60;
+% 
+% fid =fopen([DataDir,DataName]);
+% VibSig = fscanf(fid, '%g', [Ns0 Rows]);   
+% VibSig = VibSig'.*0.1;  % Convert to um
+% fclose(fid);
+% 
+% RPM = dlmread([DataDir,'SUD_740-ST-0102A_REV1.txt']);
+% RPM = RPM(1:Rows);
+% 
+% 
+% %%
+% % 能量校正法
+% clc
+% DataNo = 150;
+% xt = VibSig(DataNo,:);
+% f0 = RPM(DataNo)/60;
+% [Cf, CA, CP]= EnergySpecphaseBasedOnMsineSigWaveForm(xt,Fs,f0);
+% myspecfft(xt,Fs,1);
 
 
 %%
@@ -38,6 +41,7 @@ myspecfft(xt,Fs,1);
 clear,clc
 
 DataDir ='G:\FengKun\MATLABWORK\MyGeneralFunctions\ExamplesAndTests\Spectral\Data\K4003_1H_历史波形图\' ;
+DataDir    = './';
 DataName = 'K4003_1H2014-08-28 152028.637.txt' ; Fs = 5120;f0 = 2986/60;
 
 % DataDir = 'G:\FengKun\MATLABWORK\MyGeneralFunctions\ExamplesAndTests\Spectral\Data\汽轮发电机组740ST0101B波形_25600hz\';
