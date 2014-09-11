@@ -92,7 +92,10 @@ public:
 			double adblRatio=1);
 
 	static double MatlabMod(double adblX,double adblY);
+
+	static int CRC16(unsigned char *apInput, int anLength,unsigned short & asCRC);
 	
+	static int HASH(unsigned char *apInput, int anLength,unsigned int & anCRC);
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
@@ -121,6 +124,9 @@ public:
 protected:
 private:
 };
+
+
+
 
 
 

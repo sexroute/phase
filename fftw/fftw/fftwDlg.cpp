@@ -245,22 +245,14 @@ void CfftwDlg::OnBnClickedOk()
 	_DECLARE_PERF_MEASURE_TIME()
 
 
-		CSigMath SigMath;		 
+	CSigMath SigMath;		 
 	vector<SSigParam> vSigComponet;
-	vSigComponet.resize(4);
+	vSigComponet.resize(10);
 	double fSpecCorrectFreq_;
 	fSpecCorrectFreq_ = double(ldblF0);
 	int iSampleRate = ldblSampeRate;
 
-	_BEGIN_PERF_MEASURE_TIME();
-	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
-		fSpecCorrectFreq_, 
-		iSampleRate, 
-		lvoData.size()-1, 
-		vSigComponet, 
-		E_SpectrumType_Peak_Peak);	
 
-	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 	_BEGIN_PERF_MEASURE_TIME();
 
@@ -277,7 +269,15 @@ void CfftwDlg::OnBnClickedOk()
 	_END_PERF_MEASURE_TIME("APFFT");
 
 
+	_BEGIN_PERF_MEASURE_TIME();
+	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
+		fSpecCorrectFreq_, 
+		iSampleRate, 
+		lvoData.size(), 
+		vSigComponet, 
+		E_SpectrumType_Peak_Peak);	
 
+	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
 
 
 	for (int i=0;i<lvoFreqToAdjust.size();i++)
