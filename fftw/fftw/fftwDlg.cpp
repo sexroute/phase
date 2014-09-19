@@ -158,6 +158,8 @@ HCURSOR CfftwDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+int loopCount = 0;
+
 void CfftwDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -169,11 +171,46 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoFreq;
 	std::vector<double> lvoFreqToAdjust;
 
-	double ldblSampeRate = 25600;
-	double ldblF0 =25;
-	CString lstrfilename = "wave_001.txt";
-	//lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
-	//lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
+	double ldblSampeRate = 5120;
+	double ldblF0 =20;
+	CString lstrfilename = "P1002A.txt";
+
+	if (loopCount%3==0)
+	{
+		ldblSampeRate = 25600;
+
+		ldblF0 =25;
+
+		lstrfilename = "P1002A.txt";
+
+
+
+	}else if (loopCount%3==1)
+	{
+		ldblSampeRate = 5120;
+
+		ldblF0 =50;
+
+		lstrfilename = "Vib740ST0101B1H_2014-08-29 225812.090.txt";
+
+	}else if (loopCount%3==2)
+	{
+		ldblSampeRate = 5120;
+
+		ldblF0 =50;
+
+		lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
+	}
+
+	ldblSampeRate = 25600;
+
+	ldblF0 =20;
+
+	lstrfilename = "P1002A.txt";
+
+	loopCount++;
+	
+	//
 	std::ifstream lofile(lstrfilename.GetBuffer(0), ios::in);
 	
 
@@ -242,18 +279,52 @@ void CfftwDlg::OnBnClickedOk()
 	
 	if (lnDataSize%2!=0)
 	{
-		lnDataSize = lnDataSize-1;
+		//lnDataSize = lnDataSize-1;
 	}
 
 	_BEGIN_PERF_MEASURE_TIME();
-	int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
-		fSpecCorrectFreq_, 
-		iSampleRate, 
-		lnDataSize, 
-		vSigComponet, 
-		E_SpectrumType_Peak_Peak);	
+	try
+	{
+/*
+		int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
+			fSpecCorrectFreq_, 
+			iSampleRate, 
+			lnDataSize, 
+			vSigComponet, 
+			E_SpectrumType_Peak_Peak);	*/
+	}
+	catch (CMemoryException* e)
+	{
+		
+	}
+	catch (CFileException* e)
+	{
+	}
+	catch (CException* e)
+	{
+	}
 
 	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
+
+	_BEGIN_PERF_MEASURE_TIME();
+
+	int lnOutSize = lvoAmp.size();
+
+	lnRet = CFFT_Wrapper::LoadAllPlan();
+
+	if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
+	{
+		CFFT_Wrapper::PreparePlan();
+	}
+	
+
+	lnRet = CFFT_Wrapper::FFT2(&lvoData.front(),
+								&lvoAmp.front(),
+								&lvoPhase.front(),							
+								lvoData.size(),
+								lnOutSize);
+
+	_END_PERF_MEASURE_TIME("FFT2");
 
 
 
@@ -267,7 +338,7 @@ void CfftwDlg::OnBnClickedOk()
 								ldblSampeRate,
 								lvoData.size(),
 								lvoFreqToAdjust.size(),
-								lnDataSize,4);
+								lnDataSize,4,0,0);
 
 	_END_PERF_MEASURE_TIME("APFFT");
 

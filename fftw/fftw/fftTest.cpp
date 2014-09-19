@@ -340,7 +340,7 @@ int CFFT_Wrapper::FFT4( double * apInput,
 
 	CFFT_Wrapper::LoadPlan(anInputLength);
 
-	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE);
 
 	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
 
@@ -596,6 +596,32 @@ unsigned int CFFT_Wrapper::GetCPUTYPE()
 	return G_HARDWARE_ID;
 }
 
+
+int CFFT_Wrapper::LoadAllPlan()
+{
+
+	mkdir("./plan_cache");
+
+	char lpFileName[100] = {0};
+
+	unsigned int lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
+
+	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",lnHardwareFeature);
+
+	FILE * lpFile = fopen(lpFileName,"r");
+
+	if (NULL == lpFile)
+	{
+		return ERR_NO_CACHE;
+	}
+
+	fftw_import_wisdom_from_file(lpFile); 
+
+	fclose(lpFile);
+
+	return ERR_NO_ERROR;
+}
+
 int CFFT_Wrapper::LoadPlan(int anInputLength)
 {
 	if (anInputLength<=_MIN_POINT)
@@ -625,6 +651,40 @@ int CFFT_Wrapper::LoadPlan(int anInputLength)
 	return ERR_NO_ERROR;
 }
 
+int CFFT_Wrapper::AppendAllPlan(char *  apPlan,int anCharLength)
+{
+	if (anCharLength<=0)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	if (NULL == apPlan)
+	{
+		return ERR_NULL_INPUT_BUFFER;
+	}
+
+	mkdir("./plan_cache");
+
+	char lpFileName[100] = {0};
+
+	unsigned lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
+
+	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",lnHardwareFeature);
+
+	FILE * lpFile = fopen(lpFileName,"wb+");
+
+	if (NULL == lpFile)
+	{
+		return ERR_NO_CACHE;
+	}	
+
+	fprintf(lpFile, "%s", apPlan);
+
+	fclose(lpFile);
+
+	return ERR_NO_ERROR;
+}
+
 
 int CFFT_Wrapper::SavePlan(int anInputLength)
 {
@@ -646,7 +706,7 @@ int CFFT_Wrapper::SavePlan(int anInputLength)
 	if (NULL == lpFile)
 	{
 		return ERR_NO_CACHE;
-	}
+	}	
 
 	fftw_export_wisdom_to_file(lpFile);
 
@@ -1307,7 +1367,7 @@ int CFFT_Wrapper::APFFT( double *apInput,
 			ldblPhaseAdjusted += 360.0;
 		}
 
-		//ldblPhaseAdjusted = 90-ldblPhaseAdjusted;
+		ldblPhaseAdjusted = 90-ldblPhaseAdjusted;
 
 		if (ldblPhaseAdjusted<0)
 		{
@@ -1336,4 +1396,66 @@ int CFFT_Wrapper::APFFT( double *apInput,
 
 	return ERR_NO_ERROR;
 }
+
+int CFFT_Wrapper::PreparePlan()
+{
+
+	_DECLARE_PERF_MEASURE_TIME();
+	_BEGIN_PERF_MEASURE_TIME();
+	for (int i = 8; i <= 16384; i = i+2)
+	{
+		// Create new buffers and fill
+		std::vector<double> loInput;
+
+		int anInputLength = i;
+
+		loInput.resize(anInputLength,0);
+
+		double * lpInput = &loInput.front();
+
+		fftw_plan p = NULL;
+
+		fftw_complex* lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+
+		p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+		
+		if (NULL!= p)
+		{
+			fftw_destroy_plan(p);
+
+			char * lpStrWisdom = fftw_export_wisdom_to_string();
+
+			if (NULL!= lpStrWisdom)
+			{
+				CFFT_Wrapper::AppendAllPlan(lpStrWisdom,lstrlen(lpStrWisdom));
+
+				try
+				{
+					fftw_free(lpStrWisdom);
+				}
+				catch (CMemoryException* e)
+				{
+					
+				}
+				catch (CFileException* e)
+				{
+				}
+				catch (CException* e)
+				{
+				}
+
+				
+			}
+		}		
+
+		fftw_free(lpOut); 
+
+
+	}
+	_END_PERF_MEASURE_TIME("PreparePlan");
+
+	return CFFT_Wrapper::ERR_NO_ERROR;
+}
+
+
 

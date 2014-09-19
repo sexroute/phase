@@ -102,6 +102,8 @@ public:
 			double & ldblSum,
 			double adblRatio=1);
 
+	static int PreparePlan();
+
 	static inline double MatlabMod(double adblX,double adblY);
 
 	static inline int CRC16(unsigned char *apInput, int anLength,unsigned short & asCRC);
@@ -121,6 +123,9 @@ public:
 	static int LoadPlan(int anInputLength);
 	static unsigned int GetCPUTYPE();
 	static int SavePlan(int anInputLength);
+	static int AppendAllPlan(char * apPlan,int anCharLength);
+	static int LoadAllPlan();
+	
 	enum _EER_CODE_
 	{
 		ERR_NO_ERROR = 0,
