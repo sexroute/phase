@@ -5,11 +5,16 @@
 #include <float.h>
 #include <direct.h>
 #include "DebugHelper.h"
-#pragma comment(lib,"libfftw3-3.lib")
+#ifdef DEBUG
+#pragma comment(lib,"libfftw-3.3d.lib")
+#else
+#pragma comment(lib,"libfftw-3.3.lib")
+#endif
+
 #define _FFT_PI 3.1415926535898
 #define _MIN_POINT 16
 unsigned int G_HARDWARE_ID = -1;
-
+#include "../../fftw-3.3.2/api/fftw3.h"
 inline double CFFT_Wrapper::MatlabMod(double adblX,double adblY)
 {
 	if (CFFT_Wrapper::IsZero(adblY))

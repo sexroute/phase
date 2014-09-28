@@ -5,7 +5,7 @@
 #include "fftw.h"
 #include "fftwDlg.h"
 #include ".\fftwdlg.h"
-#include "fftw3.h"
+#include "../../fftw-3.3.2/api/fftw3.h"
 #include "fftwx.h"
 #include <fstream>
 #include <vector>
