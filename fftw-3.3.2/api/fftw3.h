@@ -48,7 +48,8 @@
 #define FFTW3_H
 
 #include <stdio.h>
-
+typedef void * (*MemallocFuncCallBack)(size_t);
+typedef void (*MemFreeCallBack)(void *);
 #ifdef __cplusplus
 extern "C"
 {
@@ -321,7 +322,7 @@ FFTW_EXTERN void X(cleanup_threads)(void);				   \
 									   \
 FFTW_EXTERN int X(export_wisdom_to_filename)(const char *filename);	   \
 FFTW_EXTERN void X(export_wisdom_to_file)(FILE *output_file);		   \
-FFTW_EXTERN char *X(export_wisdom_to_string)(void);			   \
+FFTW_EXTERN char *X(export_wisdom_to_string)(MemallocFuncCallBack);			   \
 FFTW_EXTERN void X(export_wisdom)(X(write_char_func) write_char,   	   \
                                   void *data);				   \
 FFTW_EXTERN int X(import_system_wisdom)(void);				   \
@@ -346,6 +347,7 @@ FFTW_EXTERN double X(cost)(const X(plan) p);				   \
 FFTW_EXTERN const char X(version)[];					   \
 FFTW_EXTERN const char X(cc)[];						   \
 FFTW_EXTERN const char X(codelet_optim)[];
+
 
 
 /* end of FFTW_DEFINE_API macro */

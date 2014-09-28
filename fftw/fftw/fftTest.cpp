@@ -613,15 +613,22 @@ int CFFT_Wrapper::LoadAllPlan()
 
 	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",lnHardwareFeature);
 
-	FILE * lpFile = fopen(lpFileName,"r");
+	FILE * lpFile = NULL;
+	
+	lpFile = fopen(lpFileName,"r+");
 
 	if (NULL == lpFile)
 	{
 		return ERR_NO_CACHE;
 	}
+	int lnReadLength =10*1024*1024;
 
-	fftw_import_wisdom_from_file(lpFile); 
+	std::vector<CHAR> loBuffer(lnReadLength,0);
+	
+	int lnReadCount = fread(&loBuffer.front(),sizeof(CHAR),lnReadLength,lpFile);
 
+	//fftw_import_wisdom_from_file(lpFile); 
+	int lnRet = fftw_import_wisdom_from_string(&loBuffer.front());
 	fclose(lpFile);
 
 	return ERR_NO_ERROR;
@@ -1428,7 +1435,7 @@ int CFFT_Wrapper::PreparePlan()
 		{
 			fftw_destroy_plan(p);
 
-			char * lpStrWisdom = fftw_export_wisdom_to_string();
+			char * lpStrWisdom = fftw_export_wisdom_to_string(malloc);
 
 			if (NULL!= lpStrWisdom)
 			{
@@ -1436,7 +1443,7 @@ int CFFT_Wrapper::PreparePlan()
 
 				try
 				{
-					fftw_free(lpStrWisdom);
+					free(lpStrWisdom);
 				}
 				catch (CMemoryException* e)
 				{

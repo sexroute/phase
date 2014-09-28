@@ -160,6 +160,8 @@ HCURSOR CfftwDlg::OnQueryDragIcon()
 
 int loopCount = 0;
 
+int g_planLoaded = 0;
+
 void CfftwDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -310,18 +312,28 @@ void CfftwDlg::OnBnClickedOk()
 
 	int lnOutSize = lvoAmp.size();
 
-	lnRet = CFFT_Wrapper::LoadAllPlan();
-
-	if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
+	if (!g_planLoaded)
 	{
-		CFFT_Wrapper::PreparePlan();
+		lnRet = CFFT_Wrapper::LoadAllPlan();
+
+		if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
+		{
+			CFFT_Wrapper::PreparePlan();
+		}
+
+		g_planLoaded = TRUE;
 	}
+
+
+
+	_END_PERF_MEASURE_TIME("LoadAllPlan");
 	
+	_BEGIN_PERF_MEASURE_TIME();
 
 	lnRet = CFFT_Wrapper::FFT2(&lvoData.front(),
 								&lvoAmp.front(),
 								&lvoPhase.front(),							
-								lvoData.size(),
+								lvoData.size()-3,
 								lnOutSize);
 
 	_END_PERF_MEASURE_TIME("FFT2");
@@ -336,7 +348,7 @@ void CfftwDlg::OnBnClickedOk()
 								&lvoPhase.front(),
 								&lvoFreq.front(),
 								ldblSampeRate,
-								lvoData.size(),
+								lvoData.size()-3,
 								lvoFreqToAdjust.size(),
 								lnDataSize,4,0,0);
 

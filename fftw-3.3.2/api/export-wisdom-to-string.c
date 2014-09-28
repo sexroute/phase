@@ -60,18 +60,23 @@ static printer *mkprinter_str(char *s)
      return &p->super;
 }
 
-char *X(export_wisdom_to_string)(void)
+char *X(export_wisdom_to_string)(MemallocFuncCallBack apFunc)
 {
+
+	
      printer *p;
      planner *plnr = X(the_planner)();
      int cnt;
      char *s;
-
+	 if (NULL == apFunc)
+	 {
+		 return NULL;
+	 }
      p = mkprinter_cnt(&cnt);
      plnr->adt->exprt(plnr, p);
      X(printer_destroy)(p);
 
-     s = (char *) malloc(sizeof(char) * (cnt + 1));
+     s = (char *) apFunc(sizeof(char) * (cnt + 1));
      if (s) {
           p = mkprinter_str(s);
           plnr->adt->exprt(plnr, p);
