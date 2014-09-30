@@ -364,6 +364,7 @@ void CfftwDlg::OnBnClickedOk()
 	if (!g_planLoaded)
 	{
 
+/*
 		lnRet = CFFT_Wrapper::LoadAllPlan();
 
 		if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
@@ -371,7 +372,7 @@ void CfftwDlg::OnBnClickedOk()
 			CFFT_Wrapper::PreparePlan();
 		}
 
-		g_planLoaded = TRUE;	
+		g_planLoaded = TRUE;	*/
 	}
 
 

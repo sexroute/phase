@@ -3,10 +3,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fftw", "fftw\fftw.vcproj", 
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sth", "sth\sth.vcproj", "{EE6096DB-C266-4F49-A41E-4094C465C8B5}"
-	ProjectSection(ProjectDependencies) = postProject
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -19,10 +15,6 @@ Global
 		{4BA25EC3-1410-4607-8999-FE04C586351F}.Debug.Build.0 = Debug|Win32
 		{4BA25EC3-1410-4607-8999-FE04C586351F}.Release.ActiveCfg = Release|Win32
 		{4BA25EC3-1410-4607-8999-FE04C586351F}.Release.Build.0 = Release|Win32
-		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Debug.ActiveCfg = Debug|Win32
-		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Debug.Build.0 = Debug|Win32
-		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Release.ActiveCfg = Release|Win32
-		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
