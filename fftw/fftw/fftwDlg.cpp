@@ -173,7 +173,7 @@ void CfftwDlg::OnBnClickedOk()
 	std::vector<double> lvoFreq;
 	std::vector<double> lvoFreqToAdjust;
 
-	double ldblSampeRate = 5120;
+	double ldblSampeRate = 25600;
 	double ldblF0 =20;
 	CString lstrfilename = "P1002A.txt";
 
@@ -204,11 +204,14 @@ void CfftwDlg::OnBnClickedOk()
 		lstrfilename = "K4003_1H2014-08-28 152028.637.txt";
 	}
 
+	
+
+/*
 	ldblSampeRate = 25600;
 
 	ldblF0 =20;
 
-	lstrfilename = "P1002A.txt";
+	lstrfilename = "P1002A.txt";*/
 
 	loopCount++;
 	
@@ -269,6 +272,14 @@ void CfftwDlg::OnBnClickedOk()
 
 	lnDataSize = lvoData.size();
 
+	zdlTraceLine(_T("File:%s SampleRate:%f Work Freq:%f DataLength:%d"),
+					lstrfilename,
+					ldblSampeRate,
+					ldblF0,
+					lnDataSize);
+
+	//zdlTraceLine(_T("DataLength:%d\r\n"),lnDataSize);
+
 	_DECLARE_PERF_MEASURE_TIME()
 
 
@@ -287,13 +298,19 @@ void CfftwDlg::OnBnClickedOk()
 	_BEGIN_PERF_MEASURE_TIME();
 	try
 	{
-/*
+		int lnTestSize = lnDataSize;
+
+		if (lnTestSize%2!=0)
+		{
+			lnTestSize = lnTestSize-1;
+		}
+
 		int iRes = SigMath.GetCalibratedSpectrumCharInfo(&lvoData.front(), 
 			fSpecCorrectFreq_, 
 			iSampleRate, 
-			lnDataSize, 
+			lnTestSize, 
 			vSigComponet, 
-			E_SpectrumType_Peak_Peak);	*/
+			E_SpectrumType_Peak_Peak);	
 	}
 	catch (CMemoryException* e)
 	{
@@ -307,6 +324,37 @@ void CfftwDlg::OnBnClickedOk()
 	}
 
 	_END_PERF_MEASURE_TIME("GetCalibratedSpectrumCharInfo");
+	
+	std::vector<double> loDblOut;
+	loDblOut.resize(lnDataSize);
+
+	_BEGIN_PERF_MEASURE_TIME();
+	try
+	{
+		int lnTestSize = lnDataSize;
+
+		if (lnTestSize%2!=0)
+		{
+			lnTestSize = lnTestSize-1;
+		}
+		
+		int iRes = SigMath.SpectralMeasureMent(&lvoData.front(),lnTestSize, 
+												&loDblOut.front(), 			
+												E_SpectrumType_Peak_Peak);	
+	}
+	catch (CMemoryException* e)
+	{
+
+	}
+	catch (CFileException* e)
+	{
+	}
+	catch (CException* e)
+	{
+	}
+
+	_END_PERF_MEASURE_TIME("SpectralMeasureMent");
+
 
 	_BEGIN_PERF_MEASURE_TIME();
 
@@ -314,6 +362,7 @@ void CfftwDlg::OnBnClickedOk()
 
 	if (!g_planLoaded)
 	{
+
 		lnRet = CFFT_Wrapper::LoadAllPlan();
 
 		if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
@@ -328,19 +377,29 @@ void CfftwDlg::OnBnClickedOk()
 
 	_END_PERF_MEASURE_TIME("LoadAllPlan");
 	
+/*
 	_BEGIN_PERF_MEASURE_TIME();
 
 	lnRet = CFFT_Wrapper::FFT2(&lvoData.front(),
 								&lvoAmp.front(),
 								&lvoPhase.front(),							
-								lvoData.size()-3,
+								lvoData.size(),
 								lnOutSize);
 
 	_END_PERF_MEASURE_TIME("FFT2");
 
+	_BEGIN_PERF_MEASURE_TIME();*/
 
+	lnRet = CFFT_Wrapper::FFT5(&lvoData.front(),
+								&lvoAmp.front(),
+								lvoData.size(),
+								lnOutSize);
+
+	_END_PERF_MEASURE_TIME("FFT5");
 
 	_BEGIN_PERF_MEASURE_TIME();
+
+
 
 	lnRet = CFFT_Wrapper::APFFT(&lvoData.front(),
 								&lvoFreqToAdjust.front(),
@@ -348,7 +407,7 @@ void CfftwDlg::OnBnClickedOk()
 								&lvoPhase.front(),
 								&lvoFreq.front(),
 								ldblSampeRate,
-								lvoData.size()-3,
+								lvoData.size(),
 								lvoFreqToAdjust.size(),
 								lnDataSize,4,0,0);
 

@@ -5,10 +5,30 @@
 #include <float.h>
 #include <direct.h>
 #include "DebugHelper.h"
-#ifdef DEBUG
-#pragma comment(lib,"libfftw-3.3d.lib")
+//#define _FFTW_STATIC
+#ifdef _FFTW_STATIC
+	#ifdef DEBUG
+		#pragma comment(lib,"lib/Static-Release/libfftw-3.3d.lib")
+	#else
+		#pragma comment(lib,"lib/Static-Release/libfftw-3.3.lib")
+		#pragma comment(lib,"lib/Static-Release/libiomp5md.lib")
+		#pragma comment(lib,"lib/Static-Release/libmmd.lib")
+		#pragma comment(lib,"lib/Static-Release/libirc.lib")
+		#pragma comment(lib,"lib/Static-Release/svml_dispmd.lib")
+		#pragma comment(lib,"lib/Static-Release/libdecimal.lib")
+	#endif
 #else
-#pragma comment(lib,"libfftw-3.3.lib")
+	#ifdef DEBUG
+		#pragma comment(lib,"libfftw-3.3d.lib")
+	#else
+		#pragma comment(lib,"libfftw-3.3.lib")
+	#endif
+#endif // _FFTW_STATIC
+
+
+#define SINGLE_PRECISION 1
+#ifdef SINGLE_PRECISION
+
 #endif
 
 #define _FFT_PI 3.1415926535898
@@ -118,17 +138,26 @@ int CFFT_Wrapper::FFT(  double * apInput,
 	}
 
 	//2.do fftw3
-	fftw_complex * lpOut = NULL;
+	fftwf_complex * lpOut = NULL;
 
-	fftw_plan p = NULL;
+	fftwf_plan p = NULL;
 	
-	lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+	lpOut = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * anInputLength);
 
-	p = fftw_plan_dft_r2c_1d(anInputLength,apInput,lpOut,FFTW_MEASURE);
+	std::vector<float> loInput(anInputLength);
 
-	fftw_execute(p);
+	for (int i=0;i<anInputLength;i++)
+	{
+		loInput[i] = apInput[i];
+	}
 
-	fftw_destroy_plan(p);
+	float * lpInput = &loInput.front();
+
+	p = fftwf_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+
+	fftwf_execute(p);
+
+	fftwf_destroy_plan(p);
 
 	for (int i=0;i<anOutputLength;i++)
 	{
@@ -136,7 +165,7 @@ int CFFT_Wrapper::FFT(  double * apInput,
 		apOutPutImg[i]  = lpOut[i][1];
 	}
 
-	fftw_free(lpOut); 
+	fftwf_free(lpOut); 
 
 	return ERR_NO_ERROR;
 
@@ -201,27 +230,30 @@ int CFFT_Wrapper::FFT2( double * apInput,
 	anOutputLength = lnActuralOutputLength;	
 
 	//2.do fftw3
-	fftw_complex * lpOut = NULL;
+	fftwf_complex * lpOut = NULL;
 
-	std::vector<double> loInput;
+	std::vector<float> loInput;
 
 	loInput.resize(anInputLength);
 
-	double * lpInput = &loInput.front();
+	float * lpInput = &loInput.front();
 
-	fftw_plan p = NULL;
+	fftwf_plan p = NULL;
 
-	lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+	lpOut = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * anInputLength);
 
-	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE);
+	p = fftwf_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE  );
 
-	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
+	for (int i=0;i<anInputLength;i++)
+	{
+		lpInput[i] = apInput[i];
+	}
+
+	//memcpy(lpInput,apInput,sizeof(double)*anInputLength);
 
 	//fftw_execute_dft_r2c(p,apInput,lpOut);
 
-	fftw_execute(p);
-
-
+	fftwf_execute(p);
 
 	for (int i=0;i<lnFFTLoopLength;i++)
 	{
@@ -265,9 +297,138 @@ int CFFT_Wrapper::FFT2( double * apInput,
 
 	apOutPutPhase[0] = apOutPutPhase[0]/lnDividLength;
 
-	fftw_destroy_plan(p);
+	fftwf_destroy_plan(p);
 
-	fftw_free(lpOut); 
+	fftwf_free(lpOut); 
+
+	return ERR_NO_ERROR;
+}
+
+
+int CFFT_Wrapper::FFT5( double * apInput, 
+					   double * apOutPutAmp, 
+					   int anInputLength, 
+					   int& anOutputLength,
+					   BOOL abDividLength /*= 1*/,
+					   double adblRatio/*=2*/
+					   )
+{
+	if (NULL == apInput)
+	{
+		return ERR_NULL_INPUT_BUFFER;
+	}
+
+	if (NULL == apOutPutAmp)
+	{
+		return ERR_NULL_OUTPUT_AMP_BUFFER;
+	}
+
+
+	if (anInputLength<=_MIN_POINT)
+	{
+		return ERR_INVALID_INPUT_LENGTH;
+	}
+
+	//保证是偶数
+	if (anInputLength%2!=0)
+	{
+		anInputLength = anInputLength-1;
+	}
+
+	int lnDividLength = 1;
+
+	int lnActuralOutputLength = anInputLength;
+
+	if (abDividLength)
+	{
+		lnDividLength = anInputLength/2;
+
+		lnActuralOutputLength = ceil(double(anInputLength)/2);
+	}
+
+	int lnFFTLoopLength = ceil(double(anInputLength)/2);
+
+	if (anOutputLength<lnActuralOutputLength)
+	{
+		anOutputLength= lnActuralOutputLength;
+
+		return ERR_NOT_ENOUGH_OUTPUT_BUFFER_LENGTH;
+	}
+
+	anOutputLength = lnActuralOutputLength;	
+
+	//2.do fftw3
+	fftwf_complex * lpOut = NULL;
+
+	std::vector<float> loInput;
+
+	loInput.resize(anInputLength);
+
+	float * lpInput = &loInput.front();
+
+	fftwf_plan p = NULL;
+
+	lpOut = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * anInputLength);
+
+	p = fftwf_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE  );
+
+
+	for (int i=0;i<anInputLength;i++)
+	{
+		lpInput[i] = apInput[i];
+	}
+	//memcpy(lpInput,apInput,sizeof(float)*anInputLength);
+
+
+	//fftw_execute_dft_r2c(p,apInput,lpOut);
+
+	fftwf_execute(p);
+
+	for (int i=0;i<lnFFTLoopLength;i++)
+	{
+		double ldblReal = lpOut[i][0];
+
+		double ldblImage  = lpOut[i][1];
+
+		double ldblMag = sqrt((ldblReal * ldblReal) + (ldblImage * ldblImage))*adblRatio/lnDividLength;
+
+		//double ldblPhase = atan2(ldblImage,ldblReal)/_FFT_PI*180.0;
+
+		//ldblPhase = (int)(ldblPhase*10000)%3600000;
+
+		//ldblPhase = ldblPhase/10000;	
+
+		//if (ldblPhase<0)
+		//{
+		//	ldblPhase += 360.00;
+		//}
+
+		apOutPutAmp[i] = ldblMag;
+
+		//apOutPutPhase[i]= ldblPhase+adblPhaseDiff;
+
+		if (i==0)
+		{
+			continue;
+		}
+
+		if (lnFFTLoopLength<lnActuralOutputLength)
+		{
+			apOutPutAmp[lnFFTLoopLength*2-i] = apOutPutAmp[i];
+
+		//	apOutPutPhase[lnFFTLoopLength*2-i] = apOutPutPhase[i];
+		}
+
+	}
+
+	//处理零点
+	apOutPutAmp[0] = apOutPutAmp[0]/lnDividLength;
+
+	//apOutPutPhase[0] = apOutPutPhase[0]/lnDividLength;
+
+	fftwf_destroy_plan(p);
+
+	fftwf_free(lpOut); 
 
 	return ERR_NO_ERROR;
 }
@@ -331,27 +492,32 @@ int CFFT_Wrapper::FFT4( double * apInput,
 	anOutputLength = lnActuralOutputLength;	
 
 	//2.do fftw3
-	fftw_complex * lpOut = NULL;
+	fftwf_complex * lpOut = NULL;
 
-	std::vector<double> loInput;
+	std::vector<float> loInput;
 
 	loInput.resize(anInputLength);
 
-	double * lpInput = &loInput.front();
+	float * lpInput = &loInput.front();
 
-	fftw_plan p = NULL;
+	fftwf_plan p = NULL;
 
-	lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+	lpOut = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * anInputLength);
 
 	CFFT_Wrapper::LoadPlan(anInputLength);
 
-	p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE);
+	p = fftwf_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_ESTIMATE);
 
-	memcpy(lpInput,apInput,sizeof(double)*anInputLength);
+	for (int i=0;i<anInputLength;i++)
+	{
+		lpInput[i] = apInput[i];
+	}
+
+	//memcpy(lpInput,apInput,sizeof(double)*anInputLength);
 
 	//fftw_execute_dft_r2c(p,apInput,lpOut);
 
-	fftw_execute(p);
+	fftwf_execute(p);
 
 
 	for (int i=0;i<lnFFTLoopLength;i++)
@@ -398,9 +564,9 @@ int CFFT_Wrapper::FFT4( double * apInput,
 
 	CFFT_Wrapper::SavePlan(anInputLength);
 
-	fftw_destroy_plan(p);
+	fftwf_destroy_plan(p);
 
-	fftw_free(lpOut); 
+	fftwf_free(lpOut); 
 
 	return ERR_NO_ERROR;
 }
@@ -580,9 +746,9 @@ unsigned int CFFT_Wrapper::GetCPUTYPE()
 	if (G_HARDWARE_ID==-1)
 	{
 		const DWORD id = 0x80000002; //从0x80000002开始,到0x80000004结束
-		unsigned char CPUType[49] = {0};//用来存储CPU型号信息
+		unsigned char CPUType[1024] = {0};//用来存储CPU型号信息
 
-		for(DWORD t = 0 ; t < 3 ; t++ )
+		for(DWORD t = 0 ; t < 2 ; t++ )
 		{
 			ExeCPUID(id+t);
 			//每次循环结束,保存信息到数组
@@ -628,7 +794,7 @@ int CFFT_Wrapper::LoadAllPlan()
 	int lnReadCount = fread(&loBuffer.front(),sizeof(CHAR),lnReadLength,lpFile);
 
 	//fftw_import_wisdom_from_file(lpFile); 
-	int lnRet = fftw_import_wisdom_from_string(&loBuffer.front());
+	int lnRet = fftwf_import_wisdom_from_string(&loBuffer.front());
 	fclose(lpFile);
 
 	return ERR_NO_ERROR;
@@ -656,7 +822,7 @@ int CFFT_Wrapper::LoadPlan(int anInputLength)
 		return ERR_NO_CACHE;
 	}
 
-	fftw_import_wisdom_from_file(lpFile); 
+	fftwf_import_wisdom_from_file(lpFile); 
 	
 	fclose(lpFile);
 
@@ -720,7 +886,7 @@ int CFFT_Wrapper::SavePlan(int anInputLength)
 		return ERR_NO_CACHE;
 	}	
 
-	fftw_export_wisdom_to_file(lpFile);
+	fftwf_export_wisdom_to_file(lpFile);
 
 	fclose(lpFile);
 
@@ -1417,25 +1583,25 @@ int CFFT_Wrapper::PreparePlan()
 	for (int i = 8; i <= 16384; i = i+2)
 	{
 		// Create new buffers and fill
-		std::vector<double> loInput;
+		std::vector<float> loInput;
 
 		int anInputLength = i;
 
 		loInput.resize(anInputLength,0);
 
-		double * lpInput = &loInput.front();
+		float * lpInput = &loInput.front();
 
-		fftw_plan p = NULL;
+		fftwf_plan p = NULL;
 
-		fftw_complex* lpOut = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * anInputLength);
+		fftwf_complex* lpOut = (fftwf_complex*) fftwf_malloc(sizeof(fftwf_complex) * anInputLength);
 
-		p = fftw_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE);
+		p = fftwf_plan_dft_r2c_1d(anInputLength,lpInput,lpOut,FFTW_MEASURE  );
 		
 		if (NULL!= p)
 		{
-			fftw_destroy_plan(p);
+			fftwf_destroy_plan(p);
 
-			char * lpStrWisdom = fftw_export_wisdom_to_string(malloc);
+			char * lpStrWisdom = fftwf_export_wisdom_to_string(malloc);
 
 			if (NULL!= lpStrWisdom)
 			{
@@ -1460,7 +1626,7 @@ int CFFT_Wrapper::PreparePlan()
 			}
 		}		
 
-		fftw_free(lpOut); 
+		fftwf_free(lpOut); 
 
 
 	}

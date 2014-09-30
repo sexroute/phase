@@ -1,6 +1,7 @@
 #pragma once
 
 
+
 class CFFT_Wrapper
 {
 public:
@@ -71,6 +72,15 @@ public:
 							double adblRatio=2,
 							double adblPhaseDiff=90
 							); 
+
+
+	static int FFT5( double * apInput,
+					double * apOutPutAmp,
+					int   anInputLength,
+					int& anOutputLength,
+					BOOL abDividLength = 1,
+					double adblRatio=2
+					); 
 
 	static int APFFT(	double *apInput,
 						double * apInputFreqSequenceToAdjust,
