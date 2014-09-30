@@ -8,20 +8,25 @@
 //#define _FFTW_STATIC
 #ifdef _FFTW_STATIC
 	#ifdef DEBUG
-		#pragma comment(lib,"lib/Static-Release/libfftw-3.3d.lib")
+		#pragma comment(lib,"../lib/Static-Release/sthw33d.lib")
+		#pragma comment(lib,"../lib/Static-Release/libiomp5md.lib")
+		#pragma comment(lib,"../lib/Static-Release/libmmd.lib")
+		#pragma comment(lib,"../lib/Static-Release/libirc.lib")
+		#pragma comment(lib,"../lib/Static-Release/svml_dispmd.lib")
+		#pragma comment(lib,"../lib/Static-Release/libdecimal.lib")
 	#else
-		#pragma comment(lib,"lib/Static-Release/libfftw-3.3.lib")
-		#pragma comment(lib,"lib/Static-Release/libiomp5md.lib")
-		#pragma comment(lib,"lib/Static-Release/libmmd.lib")
-		#pragma comment(lib,"lib/Static-Release/libirc.lib")
-		#pragma comment(lib,"lib/Static-Release/svml_dispmd.lib")
-		#pragma comment(lib,"lib/Static-Release/libdecimal.lib")
+		#pragma comment(lib,"../lib/Static-Release/sthw33.lib")
+		#pragma comment(lib,"../lib/Static-Release/libiomp5md.lib")
+		#pragma comment(lib,"../lib/Static-Release/libmmd.lib")
+		#pragma comment(lib,"../lib/Static-Release/libirc.lib")
+		#pragma comment(lib,"../lib/Static-Release/svml_dispmd.lib")
+		#pragma comment(lib,"../lib/Static-Release/libdecimal.lib")
 	#endif
 #else
 	#ifdef DEBUG
-		#pragma comment(lib,"libfftw-3.3d.lib")
+		#pragma comment(lib,"../lib/debug/sthw33d.lib")
 	#else
-		#pragma comment(lib,"libfftw-3.3.lib")
+		#pragma comment(lib,"../lib/release/sthw33.lib")
 	#endif
 #endif // _FFTW_STATIC
 
@@ -777,7 +782,7 @@ int CFFT_Wrapper::LoadAllPlan()
 
 	unsigned int lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
 
-	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",lnHardwareFeature);
+	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",1);
 
 	FILE * lpFile = NULL;
 	
@@ -847,7 +852,7 @@ int CFFT_Wrapper::AppendAllPlan(char *  apPlan,int anCharLength)
 
 	unsigned lnHardwareFeature = CFFT_Wrapper::GetCPUTYPE();
 
-	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",lnHardwareFeature);
+	sprintf(lpFileName,"./plan_cache/plan_%u_all.txt",1);
 
 	FILE * lpFile = fopen(lpFileName,"wb+");
 
@@ -1580,7 +1585,7 @@ int CFFT_Wrapper::PreparePlan()
 
 	_DECLARE_PERF_MEASURE_TIME();
 	_BEGIN_PERF_MEASURE_TIME();
-	for (int i = 8; i <= 16384; i = i+2)
+	for (int i = 8; i <= 16384; i = i*2)
 	{
 		// Create new buffers and fill
 		std::vector<float> loInput;

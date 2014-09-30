@@ -14,6 +14,7 @@
 #include "Sigdefine.h"
 #include "SigMath.h"
 #include "DebugHelper.h"
+#include "../sth/sth.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -370,30 +371,45 @@ void CfftwDlg::OnBnClickedOk()
 			CFFT_Wrapper::PreparePlan();
 		}
 
-		g_planLoaded = TRUE;
+		g_planLoaded = TRUE;	
 	}
 
 
 
 	_END_PERF_MEASURE_TIME("LoadAllPlan");
-	
-/*
+
+
 	_BEGIN_PERF_MEASURE_TIME();
 
-	lnRet = CFFT_Wrapper::FFT2(&lvoData.front(),
-								&lvoAmp.front(),
-								&lvoPhase.front(),							
-								lvoData.size(),
-								lnOutSize);
+	lnRet = FFT5(&lvoData.front(),
+		&lvoAmp.front(),
+		lvoData.size(),
+		lnOutSize);
 
-	_END_PERF_MEASURE_TIME("FFT2");
+	_END_PERF_MEASURE_TIME("FFT5");
 
-	_BEGIN_PERF_MEASURE_TIME();*/
+	_BEGIN_PERF_MEASURE_TIME();
+	
+
+
+	_BEGIN_PERF_MEASURE_TIME();
 
 	lnRet = CFFT_Wrapper::FFT5(&lvoData.front(),
 								&lvoAmp.front(),
 								lvoData.size(),
 								lnOutSize);
+
+	_END_PERF_MEASURE_TIME("CFFT_Wrapper::FFT5");
+
+	_BEGIN_PERF_MEASURE_TIME();
+
+
+	_BEGIN_PERF_MEASURE_TIME();
+
+	lnRet = FFT5(&lvoData.front(),
+		&lvoAmp.front(),
+		lvoData.size(),
+		lnOutSize);
 
 	_END_PERF_MEASURE_TIME("FFT5");
 
@@ -409,9 +425,27 @@ void CfftwDlg::OnBnClickedOk()
 								ldblSampeRate,
 								lvoData.size(),
 								lvoFreqToAdjust.size(),
-								lnDataSize,4,0,0);
+								lnDataSize,4,0);
+
+	_END_PERF_MEASURE_TIME("CFFT_Wrapper::APFFT");
+
+
+	_BEGIN_PERF_MEASURE_TIME();
+
+
+
+	lnRet = APFFT(&lvoData.front(),
+							&lvoFreqToAdjust.front(),
+							&lvoAmp.front(),
+							&lvoPhase.front(),
+							&lvoFreq.front(),
+							ldblSampeRate,
+							lvoData.size(),
+							lvoFreqToAdjust.size(),
+							lnDataSize,4,0);
 
 	_END_PERF_MEASURE_TIME("APFFT");
+
 
 
 

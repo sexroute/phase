@@ -2,7 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fftw", "fftw\fftw.vcxproj", "{4BA25EC3-1410-4607-8999-FE04C586351F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfftw-3.3", "..\fftw-3.3.2\fftw-3.3-libs\libfftw-3.3\libfftw-3.3.vcxproj", "{EA3DCC95-2423-4EA0-A508-7A427B4C0594}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sthw33", "..\fftw-3.3.2\fftw-3.3-libs\libfftw-3.3\libfftw-3.3.vcxproj", "{EA3DCC95-2423-4EA0-A508-7A427B4C0594}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sth", "sth\sth2010.vcxproj", "{EE6096DB-C266-4F49-A41E-4094C465C8B5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +54,21 @@ Global
 		{EA3DCC95-2423-4EA0-A508-7A427B4C0594}.Template|Win32.ActiveCfg = Static-Release|x64
 		{EA3DCC95-2423-4EA0-A508-7A427B4C0594}.Template|x64.ActiveCfg = Static-Release|x64
 		{EA3DCC95-2423-4EA0-A508-7A427B4C0594}.Template|x64.Build.0 = Static-Release|x64
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Debug|Win32.Build.0 = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Debug|x64.ActiveCfg = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Release|Win32.ActiveCfg = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Release|Win32.Build.0 = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Release|x64.ActiveCfg = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Debug|Win32.ActiveCfg = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Debug|Win32.Build.0 = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Debug|x64.ActiveCfg = Debug|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Release|Win32.ActiveCfg = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Release|Win32.Build.0 = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Static-Release|x64.ActiveCfg = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Template|Win32.ActiveCfg = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Template|Win32.Build.0 = Release|Win32
+		{EE6096DB-C266-4F49-A41E-4094C465C8B5}.Template|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
