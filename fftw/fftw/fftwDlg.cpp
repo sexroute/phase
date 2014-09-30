@@ -364,7 +364,7 @@ void CfftwDlg::OnBnClickedOk()
 	if (!g_planLoaded)
 	{
 
-/*
+
 		lnRet = CFFT_Wrapper::LoadAllPlan();
 
 		if (lnRet != CFFT_Wrapper::ERR_NO_ERROR)
@@ -372,7 +372,7 @@ void CfftwDlg::OnBnClickedOk()
 			CFFT_Wrapper::PreparePlan();
 		}
 
-		g_planLoaded = TRUE;	*/
+		g_planLoaded = TRUE;	
 	}
 
 
@@ -381,32 +381,14 @@ void CfftwDlg::OnBnClickedOk()
 
 
 	_BEGIN_PERF_MEASURE_TIME();
-
-	lnRet = FFT5(&lvoData.front(),
+	lnRet = CFFT_Wrapper::FFT5(&lvoData.front(),
 		&lvoAmp.front(),
 		lvoData.size(),
 		lnOutSize);
-
-	_END_PERF_MEASURE_TIME("FFT5");
-
-	_BEGIN_PERF_MEASURE_TIME();
-	
-
-
-	_BEGIN_PERF_MEASURE_TIME();
-
-	lnRet = CFFT_Wrapper::FFT5(&lvoData.front(),
-								&lvoAmp.front(),
-								lvoData.size(),
-								lnOutSize);
-
 	_END_PERF_MEASURE_TIME("CFFT_Wrapper::FFT5");
 
 	_BEGIN_PERF_MEASURE_TIME();
 
-
-	_BEGIN_PERF_MEASURE_TIME();
-
 	lnRet = FFT5(&lvoData.front(),
 		&lvoAmp.front(),
 		lvoData.size(),
@@ -415,9 +397,21 @@ void CfftwDlg::OnBnClickedOk()
 	_END_PERF_MEASURE_TIME("FFT5");
 
 	_BEGIN_PERF_MEASURE_TIME();
+	lnRet = CFFT_Wrapper::FFT5(&lvoData.front(),
+								&lvoAmp.front(),
+								lvoData.size(),
+								lnOutSize);
+	_END_PERF_MEASURE_TIME("CFFT_Wrapper::FFT5");
 
 
+	_BEGIN_PERF_MEASURE_TIME();
+	lnRet = FFT5(&lvoData.front(),
+		&lvoAmp.front(),
+		lvoData.size(),
+		lnOutSize);
+	_END_PERF_MEASURE_TIME("FFT5");
 
+	_BEGIN_PERF_MEASURE_TIME();
 	lnRet = CFFT_Wrapper::APFFT(&lvoData.front(),
 								&lvoFreqToAdjust.front(),
 								&lvoAmp.front(),
@@ -427,14 +421,9 @@ void CfftwDlg::OnBnClickedOk()
 								lvoData.size(),
 								lvoFreqToAdjust.size(),
 								lnDataSize,4,0);
-
 	_END_PERF_MEASURE_TIME("CFFT_Wrapper::APFFT");
 
-
 	_BEGIN_PERF_MEASURE_TIME();
-
-
-
 	lnRet = APFFT(&lvoData.front(),
 							&lvoFreqToAdjust.front(),
 							&lvoAmp.front(),
@@ -444,7 +433,6 @@ void CfftwDlg::OnBnClickedOk()
 							lvoData.size(),
 							lvoFreqToAdjust.size(),
 							lnDataSize,4,0);
-
 	_END_PERF_MEASURE_TIME("APFFT");
 
 

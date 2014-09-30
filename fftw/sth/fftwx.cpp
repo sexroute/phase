@@ -1591,7 +1591,7 @@ int __cdecl CFFT_Wrapper::PreparePlan()
 
 	_DECLARE_PERF_MEASURE_TIME();
 	_BEGIN_PERF_MEASURE_TIME();
-	for (int i = 8; i <= 16384; i = i+2)
+	for (int i = 8; i <= 16384; i = i*2)
 	{
 		// Create new buffers and fill
 		std::vector<float> loInput;
